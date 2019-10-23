@@ -37,48 +37,55 @@ Function: Monitoring 3 switch-type sensors and report state change to server,
 #define STATE_RETRY_PER_DAY 	11
 #define STATE_NUMBER			12
 
+/*very time send message successfully, state going to change 
+this table defines the state change rule -- current state change to which state*/
 static uint8_t NEXT_STATE[STATE_NUMBER] =
 {
-	STATE_INSPECTION, 
-	STATE_ALARM_2, 
-	STATE_ALARM_3, 
-	STATE_ALARM_4, 
-	STATE_ALARM_PER_DAY, 
-	STATE_ALARM_PER_DAY, 
-	STATE_RETRY_2, 
-	STATE_RETRY_3, 
-	STATE_RETRY_4, 
-	STATE_RETRY_5, 
-	STATE_RETRY_PER_DAY, 
-	STATE_RETRY_PER_DAY
+	STATE_INSPECTION, 		//from STATE_INSPECTION
+	STATE_ALARM_2, 			//from STATE_ALARM_1
+	STATE_ALARM_3, 			//from STATE_ALARM_2
+	STATE_ALARM_4, 			//from STATE_ALARM_3
+	STATE_ALARM_PER_DAY, 	//from STATE_ALARM_4
+	STATE_ALARM_PER_DAY, 	//from STATE_ALARM_PER_DAY
+	STATE_RETRY_2, 			//from STATE_RETRY_1
+	STATE_RETRY_3, 			//from STATE_RETRY_2
+	STATE_RETRY_4, 			//from STATE_RETRY_3
+	STATE_RETRY_5, 			//from STATE_RETRY_4
+	STATE_RETRY_PER_DAY, 	//from STATE_RETRY_5
+	STATE_RETRY_PER_DAY		//from STATE_RETRY_PER_DAY
 };
 
-
+/*very time send message finish(OK or FAIL), device goto sleep for a period
+this table defines how long it will sleep when current state finish*/
 static uint32_t SLEEP_PERIODS[STATE_NUMBER] =
 {
-	AWU_ONE_DAY, 
-	AWU_ONE_MINUTE, 
-	AWU_ONE_MINUTE * 10, 
-	AWU_ONE_HOUR, 
-	AWU_ONE_DAY, 
-	AWU_ONE_DAY, 
-	AWU_TEN_SECONDS, 
-	AWU_TEN_SECONDS, 
-	AWU_TEN_SECONDS, 
-	AWU_ONE_MINUTE, 
-	AWU_ONE_DAY, 
-	AWU_ONE_DAY
+	AWU_ONE_DAY, 			//STATE_INSPECTION
+	AWU_ONE_MINUTE, 		//STATE_ALARM_1
+	AWU_ONE_MINUTE * 10, 	//STATE_ALARM_2
+	AWU_ONE_HOUR, 			//STATE_ALARM_3
+	AWU_ONE_DAY, 			//STATE_ALARM_4
+	AWU_ONE_DAY, 			//STATE_ALARM_PER_DAY
+	AWU_TEN_SECONDS, 		//STATE_RETRY_1
+	AWU_TEN_SECONDS, 		//STATE_RETRY_2
+	AWU_TEN_SECONDS, 		//STATE_RETRY_3
+	AWU_ONE_MINUTE, 		//STATE_RETRY_4
+	AWU_ONE_DAY, 			//STATE_RETRY_5
+	AWU_ONE_DAY				//STATE_RETRY_PER_DAY
 };
 
 
 main()
 {
+	/*all sensors status change: new opened/new closed/all closed/unchange*/
 	uint8_t sensor_change = SENSORS_UNCHANGED;
+	/*device state:alarm/retry/inspection*/
 	uint8_t state = STATE_INSPECTION;
+	/*remember the state before retry, which will be restored after retry done*/
 	uint8_t state_before_retry = STATE_INSPECTION;
+	SENSOR_STATUS_T sensor_status_before_retry[SENSOR_NUMBER];
+	/*structure which store the sensor status to send messge*/
 	SENSOR_STATUS_T * sensor_status;
-	SENSOR_STATUS_T retry_sensor_status[SENSOR_NUMBER];
-	uint8_t i;
+
 	//0.initilize board
 	awu_init();
 	sensor_init();
@@ -89,7 +96,7 @@ main()
 		if(state >= STATE_RETRY_1)
 		{
 			sensor_change = SENSORS_UNCHANGED;
-			sensor_status = retry_sensor_status;
+			sensor_status = sensor_status_before_retry;
 		}else{
 			sensor_change = sensor_get_change();
 			sensor_status = sensor_get_status();
@@ -132,11 +139,12 @@ main()
 				//retry action
 				if(state < STATE_RETRY_1)
 				{
+					uint8_t i;
 					for(i = 0; i < SENSOR_NUMBER; i++)
 					{
-						retry_sensor_status[i].status = sensor_status[i].status;
-						retry_sensor_status[i].open_count = sensor_status[i].open_count;
-						retry_sensor_status[i].close_count = sensor_status[i].close_count;
+						sensor_status_before_retry[i].status = sensor_status[i].status;
+						sensor_status_before_retry[i].open_count = sensor_status[i].open_count;
+						sensor_status_before_retry[i].close_count = sensor_status[i].close_count;
 					}
 					state_before_retry = state;
 					state = STATE_RETRY_1;
