@@ -7,7 +7,6 @@ Platforam:STM8+M5313
 Function: Monitoring 3 switch-type sensors and report state change to server,
 		  by M5313 from NB-IOT/GPRS network. And control a speaker alarm.
 *******************************************************************************/
-//#include "stdint.h"
 #include "stm8s.h"
 #include "sensor.h"
 #include "msg.h"
@@ -20,6 +19,7 @@ Function: Monitoring 3 switch-type sensors and report state change to server,
 #include "stm8s_clk.h"
 #include "timer.h"
 
+extern __IO uint8_t sensor_interrupt;
 
 /*Action rules:
 1.Snesor opened, send alarm message immediately
@@ -41,7 +41,7 @@ Function: Monitoring 3 switch-type sensors and report state change to server,
 #define STATE_RETRY_PER_DAY 	11
 #define STATE_NUMBER			12
 
-#define FACTORY_TEST_COUNT		1
+#define FACTORY_TEST_COUNT		0
 
 static uint8_t NEXT_STATE[STATE_NUMBER] =
 {
@@ -83,19 +83,15 @@ main()
 	uint8_t state = STATE_INSPECTION;
 	uint8_t state_before_retry = STATE_INSPECTION;
 	SENSOR_STATUS_T * sensor_status;
-	uint8_t ret, msg_type, factory_test_times = 0;
-        awu_init();
+	uint8_t ret, msg_type;
+        int8_t factory_test_times = 0;
+    awu_init();
 	timer_init();
 	timer_start();
-        sensor_init();
+    sensor_init();
 	enableInterrupts();
-	/*start watchdog*/
-	IWDG_Enable();
-	IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
-	IWDG_SetPrescaler(IWDG_Prescaler_256);
-	IWDG_SetReload((uint8_t)(0xFF));//1020ms
-	IWDG_ReloadCounter(); 
-	
+	/*start windows watchdog*/
+	WWDG_Init(0x7F, 0x7F);//393ms window@2Mhz main clock
 	
 	battery_adc_init();
 	while(1)
@@ -132,7 +128,7 @@ main()
 		speaker_close();
 
 		/*5.if factory test, continue*/
-		if(++factory_test_times <= FACTORY_TEST_COUNT)
+		if(++factory_test_times < FACTORY_TEST_COUNT)
 		{
 			continue;
 		}
@@ -169,7 +165,12 @@ main()
 		}
 		
 		//6.sleep 
-		awu_sleep(SLEEP_PERIODS[state]);
+		if(sensor_interrupt == 1)
+		{
+			sensor_interrupt = 0;
+		}else{
+			awu_sleep(SLEEP_PERIODS[state]);
+		}
 	}
 }
 

@@ -1673,13 +1673,13 @@
         <name>$PROJ_DIR$\lib\src\stm8s_gpio.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\lib\src\stm8s_iwdg.c</name>
-      </file>
-      <file>
         <name>$PROJ_DIR$\lib\src\stm8s_tim1.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\lib\src\stm8s_uart1.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\lib\src\stm8s_wwdg.c</name>
       </file>
     </group>
   </group>

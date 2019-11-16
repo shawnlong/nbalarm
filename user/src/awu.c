@@ -3,7 +3,7 @@
 
 #include "awu.h"
 
-extern __IO uint8_t ext_pc_flag;
+extern __IO uint8_t sensor_interrupt;
 
 
 
@@ -76,7 +76,7 @@ uint8_t awu_sleep(uint32_t seconds)
 	uint32_t i = 0;
 	static FLASH_LPMode_TypeDef flash_lpmode;
 	/*switch to low power mode here*/
-	
+
 	/*1.use LPVR*/
 	CLK_DeInit();
 	CLK_SlowActiveHaltWakeUpCmd(ENABLE);
@@ -121,15 +121,20 @@ uint8_t awu_sleep(uint32_t seconds)
 	GPIO_Init(GPIOD, GPIO_PIN_5, GPIO_MODE_IN_FL_NO_IT);
 	GPIO_Init(GPIOD, GPIO_PIN_6, GPIO_MODE_IN_FL_NO_IT);
 
+	if(seconds >= 30)
+	{
+		AWU_Init(AWU_TIMEBASE_30S);
+		seconds /= 30;
+	}else{
+		AWU_Init(AWU_TIMEBASE_1S);
+	}
 	for(i = 0; i < seconds; i++)
 	{
-		if(ext_pc_flag == 0)
+		WWDG_SetCounter(0x7F);
+		halt();
+		if(sensor_interrupt == 1)
 		{
-			halt();
-		}
-		else
-		{
-			ext_pc_flag = 0;
+			sensor_interrupt = 0;
 			break;
 		}
 	}
