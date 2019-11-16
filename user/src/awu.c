@@ -121,11 +121,6 @@ uint8_t awu_sleep(uint32_t seconds)
 	GPIO_Init(GPIOD, GPIO_PIN_5, GPIO_MODE_IN_FL_NO_IT);
 	GPIO_Init(GPIOD, GPIO_PIN_6, GPIO_MODE_IN_FL_NO_IT);
 
-    if(seconds >= 30)
-	{
-		AWU_Init(AWU_TIMEBASE_30S);
-		seconds /= 30;
-	}
 	for(i = 0; i < seconds; i++)
 	{
 		if(ext_pc_flag == 0)

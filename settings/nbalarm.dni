@@ -9,7 +9,7 @@ TriggerName=main
 LimitSize=0
 ByteLimit=50
 [DebugChecksum]
-Checksum=582595012
+Checksum=-358275259
 [CallStack]
 ShowArgs=0
 [Disassembly]
@@ -66,5 +66,6 @@ Category=_ 0
 LoggingEnabled=_ 0
 LogFile=_ ""
 [Aliases]
-Count=0
+A0=_ "E:\work\coding\nbalarm\code_lib\user\src\main.c" ""
+Count=1
 SuppressDialog=0

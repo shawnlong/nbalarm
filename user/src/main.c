@@ -27,27 +27,24 @@ Function: Monitoring 3 switch-type sensors and report state change to server,
 3.once all sensor closed, send alarm message then enter inspection state, send status message per 24 hours
 4.once send failed, try again after 10s, 10s, 10s, 1m, per 24hours
 */
-#define STATE_FACTORY_TEST		0
-#define STATE_INSPECTION		1
-#define STATE_ALARM_1			2
-#define STATE_ALARM_2			3
-#define STATE_ALARM_3			4
-#define STATE_ALARM_4			5
-#define STATE_ALARM_PER_DAY 	6
-#define STATE_RETRY_1			7
-#define STATE_RETRY_2			8
-#define STATE_RETRY_3			9
-#define STATE_RETRY_4			10
-#define STATE_RETRY_5			11
-#define STATE_RETRY_PER_DAY 	12
-#define STATE_NUMBER			13
+#define STATE_INSPECTION		0
+#define STATE_ALARM_1			1
+#define STATE_ALARM_2			2
+#define STATE_ALARM_3			3
+#define STATE_ALARM_4			4
+#define STATE_ALARM_PER_DAY 	5
+#define STATE_RETRY_1			6
+#define STATE_RETRY_2			7
+#define STATE_RETRY_3			8
+#define STATE_RETRY_4			9
+#define STATE_RETRY_5			10
+#define STATE_RETRY_PER_DAY 	11
+#define STATE_NUMBER			12
 
-#define FACTORY_TEST_COUNT		5
-#define FACTORY_TEST_PERIOD 	AWU_ONE_SECONDS
+#define FACTORY_TEST_COUNT		1
 
 static uint8_t NEXT_STATE[STATE_NUMBER] =
 {
-	STATE_FACTORY_TEST, 
 	STATE_INSPECTION, 
 	STATE_ALARM_2, 
 	STATE_ALARM_3, 
@@ -65,7 +62,6 @@ static uint8_t NEXT_STATE[STATE_NUMBER] =
 
 static uint32_t SLEEP_PERIODS[STATE_NUMBER] =
 {
-	FACTORY_TEST_PERIOD, 
 	AWU_ONE_DAY, 
 	AWU_ONE_MINUTE, 
 	AWU_ONE_MINUTE * 10, 
@@ -90,14 +86,23 @@ main()
 	uint8_t ret, msg_type, factory_test_times = 0;
         awu_init();
 	timer_init();
+	timer_start();
+        sensor_init();
+	enableInterrupts();
+	/*start watchdog*/
+	IWDG_Enable();
+	IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
+	IWDG_SetPrescaler(IWDG_Prescaler_256);
+	IWDG_SetReload((uint8_t)(0xFF));//1020ms
+	IWDG_ReloadCounter(); 
+	
+	
 	battery_adc_init();
 	while(1)
 	{
 		//0.initilize board
 		CLK_HSIPrescalerConfig(CLK_PRESCALER_HSIDIV8); /*16M/8=2Mhz clock*/
-		sensor_init();
-		timer_start();
-
+	
 		//1.check sensors
 		sensor_change = sensor_get_change();
 		sensor_status = sensor_get_status();
