@@ -102,8 +102,7 @@ uint8_t dtu_init()
 	//uint16_t i;
         //init the GPIO and power on 
 	//NB power enable io output
-	UART1_Init((uint32_t)57600, UART1_WORDLENGTH_8D, UART1_STOPBITS_1, UART1_PARITY_NO,
-              UART1_SYNCMODE_CLOCK_DISABLE, UART1_MODE_TXRX_ENABLE);
+	uart_init(1, 57600);
 	GPIO_Init(GPIOC, GPIO_PIN_3, GPIO_MODE_OUT_PP_LOW_SLOW);
 	GPIO_Init(GPIOD, GPIO_PIN_2, GPIO_MODE_OUT_PP_LOW_SLOW);
 
@@ -198,7 +197,9 @@ uint8_t dtu_httppost(char * url, char * header, char * content, char * path, uin
 	//at_cmd(AT_CMD_ATE, "1");
 
 	at_cmd(AT_CMD_HTTPCREATE, url);
+	
 	at_cmd(AT_CMD_HTTPHEADER, header);
+	//at_cmd("AT+HTTPHEADER=0","");
 	do
 	{
 		if(len > DTU_CONTENT_MAX_SIZE)
@@ -218,7 +219,7 @@ uint8_t dtu_httppost(char * url, char * header, char * content, char * path, uin
 			break;
 		}
 	}while(len > 0);
-	
+	//at_cmd("AT+HTTPCONTENT=0","");
 	at_cmd(AT_CMD_HTTPSEND, path);
 	response = waitfor_response(timeout, HTTP_ACK_OK, HTTP_ACK_FAIL);
 	at_cmd(AT_CMD_HTTPCLOSE, "=0");
@@ -300,5 +301,6 @@ uint8_t dtu_get_signal(uint8_t * signal_strength)
 
 	return 0;
 }
+
 
 

@@ -4,7 +4,7 @@
 
 #include "gpio.h"
 
-volatile uint8_t ext_pc_flag = 0;
+volatile uint8_t sensor_interrupt = 0;
  
 
 uint8_t gpio_init(uint8_t pin, uint8_t mode)
@@ -206,7 +206,7 @@ uint8_t gpio_set_value(uint8_t pin, uint8_t value)
 __interrupt void EXTI_PC() //PD外中断
 {
 	asm("nop");
-	ext_pc_flag = 1;
+	sensor_interrupt = 1;
 	//PC_CR2 = 0x0; //关中断 	
 }
 

@@ -9,7 +9,7 @@ TriggerName=main
 LimitSize=0
 ByteLimit=50
 [DebugChecksum]
-Checksum=1368698844
+Checksum=-11831200
 [CallStack]
 ShowArgs=0
 [Disassembly]
@@ -49,11 +49,18 @@ ActionState=1
 [Trace1]
 Enabled=0
 ShowSource=1
+[BreakpointUsageDialog]
+Placement=_ 418 239 863 522
 [DataSample]
 LogEnabled=0
 GraphEnabled=0
 ShowTimeLog=1
 ShowTimeSum=1
+<<<<<<< HEAD
+=======
+[Breakpoints]
+Count=0
+>>>>>>> wwdg
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""
@@ -61,8 +68,11 @@ Category=_ 0
 [TermIOLog]
 LoggingEnabled=_ 0
 LogFile=_ ""
+<<<<<<< HEAD
 [Breakpoints]
 Count=0
+=======
+>>>>>>> wwdg
 [Aliases]
 A0=_ "E:\work\coding\nbalarm\code_lib\user\src\main.c" ""
 Count=1

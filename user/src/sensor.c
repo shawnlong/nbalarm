@@ -8,8 +8,11 @@
 #include "gpio.h"
 
 //each sensor status value
-static SENSOR_STATUS_T sensor_statuses[SENSOR_NUMBER];
-
+static  SENSOR_STATUS_T sensor_statuses[SENSOR_NUMBER] = {
+	{SENSOR_CLOSE, 0 ,0},
+	{SENSOR_CLOSE, 0 ,0},
+	{SENSOR_CLOSE, 0 ,0}
+};
 static GPIO_TypeDef* ID_TO_PORT[SENSOR_NUMBER] =
 {
 	GPIOC, GPIOC, GPIOC
@@ -25,14 +28,6 @@ uint8_t sensor_init()
 	GPIO_Init(GPIOC, GPIO_PIN_6, GPIO_MODE_IN_PU_IT);
 	GPIO_Init(GPIOC, GPIO_PIN_7, GPIO_MODE_IN_PU_IT);
 	EXTI_SetExtIntSensitivity(EXTI_PORT_GPIOC, EXTI_SENSITIVITY_RISE_FALL);
-
-	uint8_t i;
-	for(i = 0; i < SENSOR_NUMBER; i ++)
-	{
-		sensor_statuses[i].status = SENSOR_CLOSE;
-		sensor_statuses[i].open_count = 0;
-		sensor_statuses[i].close_count = 0;
-	}
 	return 0;
 }
 

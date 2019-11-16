@@ -30,6 +30,10 @@ uint8_t sensor_init();
 uint8_t sensor_close();
 SENSOR_STATUS_T *sensor_get_status();
 uint8_t sensor_get_change();
+uint8_t sensor_push_status(SENSOR_STATUS_T *status);
+uint8_t sensor_peek_status(SENSOR_STATUS_T *status);
+uint8_t sensor_pop_status(SENSOR_STATUS_T *status);
+
 
 #endif
 

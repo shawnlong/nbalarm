@@ -34,8 +34,8 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 //extern uint16_t Conversion_Value;
-extern __IO uint32_t ticks_second;
-__IO uint8_t ext_pc_flag;
+extern __IO uint32_t ticks_quarter_second;
+__IO uint8_t sensor_interrupt;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 /* Public functions ----------------------------------------------------------*/
@@ -90,7 +90,7 @@ INTERRUPT_HANDLER(AWU_IRQHandler, 1)
   /* In order to detect unexpected events during development,
      it is recommended to set a breakpoint on the following instruction.
   */
-  AWU_GetFlagStatus();
+  AWU_GetFlagStatus(); 
 }
 
 /**
@@ -139,7 +139,7 @@ INTERRUPT_HANDLER(EXTI_PORTC_IRQHandler, 5)
   /* In order to detect unexpected events during development,
      it is recommended to set a breakpoint on the following instruction.
   */
-    ext_pc_flag = 1;
+    sensor_interrupt = 1;
 }
 
 /**
@@ -229,8 +229,8 @@ INTERRUPT_HANDLER(TIM1_UPD_OVF_TRG_BRK_IRQHandler, 11)
      it is recommended to set a breakpoint on the following instruction.
   */
   TIM1_ClearITPendingBit(TIM1_IT_UPDATE);
-  ticks_second++;
-  
+  WWDG_SetCounter(0x7F);
+  ticks_quarter_second++;
 }
 
 /**

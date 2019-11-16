@@ -1,3 +1,73 @@
+#if 1
+#include "stm8s.h"
+#include "uart.h"
+#include "timer.h"
+
+/*
+  function:uart_init
+		initialize the uart
+  param:
+		no - the uart number:1/2/3
+  return:
+		0 - success
+		n - error code
+*/
+uint8_t uart_init(uint8_t id, uint16_t baudrate)
+{
+	UART1_Init((uint32_t)57600, UART1_WORDLENGTH_8D, UART1_STOPBITS_1, UART1_PARITY_NO,
+              UART1_SYNCMODE_CLOCK_DISABLE, UART1_MODE_TXRX_ENABLE);
+	return 0;
+}
+
+
+/*
+  function:uart_send
+		send data from uart
+  param:
+		data - data array to send
+		len  - length of the data
+  return:
+		0 - success
+		n - error code
+*/
+uint8_t uart_send(char * data, uint8_t len)
+{
+	uint8_t i;
+        uint32_t tick = timer_get_tick();
+
+	for(i = 0; i < len; i++)
+	{
+		while((UART1_GetFlagStatus(UART1_FLAG_TXE)) == 0x00 && (timer_get_tick() - tick < 2))
+			;
+
+		UART1_SendData8(data[i]);
+	}
+
+	return 0;
+}
+
+/*
+  function:uart_getchar
+		get one char from uart
+  param:
+		data - the char to store received data
+  return:
+		0 - success
+		1 - no char received
+*/
+uint8_t uart_getchar(char * data)
+{
+	if(UART1->SR & UART1_FLAG_RXNE){
+		*data = UART1->DR;
+		return 0;
+	}
+	else{
+		return 1;
+	}
+}
+
+
+#else
 
 #include "iostm8s103F3.h"
 #include "stdint.h"
@@ -127,6 +197,10 @@ unsigned char * DTU_AT(unsigned char * command, int responsesize)
 	getStr(response, responsesize);
 	return response;
 }
+
+
+#endif
+
 
 
 #endif
