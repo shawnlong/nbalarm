@@ -198,7 +198,9 @@ uint8_t dtu_httppost(char * url, char * header, char * content, char * path, uin
 	//at_cmd(AT_CMD_ATE, "1");
 
 	at_cmd(AT_CMD_HTTPCREATE, url);
+	
 	at_cmd(AT_CMD_HTTPHEADER, header);
+	//at_cmd("AT+HTTPHEADER=0","");
 	do
 	{
 		if(len > DTU_CONTENT_MAX_SIZE)
@@ -218,7 +220,7 @@ uint8_t dtu_httppost(char * url, char * header, char * content, char * path, uin
 			break;
 		}
 	}while(len > 0);
-	
+	//at_cmd("AT+HTTPCONTENT=0","");
 	at_cmd(AT_CMD_HTTPSEND, path);
 	response = waitfor_response(timeout, HTTP_ACK_OK, HTTP_ACK_FAIL);
 	at_cmd(AT_CMD_HTTPCLOSE, "=0");
@@ -300,5 +302,6 @@ uint8_t dtu_get_signal(uint8_t * signal_strength)
 
 	return 0;
 }
+
 
 

@@ -50,10 +50,11 @@ uint8_t uart_init(uint8_t id, uint16_t baudrate)
 uint8_t uart_send(char * data, uint8_t len)
 {
 	uint8_t i;
+        uint32_t tick = timer_get_tick();
 
 	for(i = 0; i < len; i++)
 	{
-		while((UART1_SR & 0x80) == 0x00)
+		while((UART1_SR & 0x80) == 0x00 && (timer_get_tick() - tick < 2))
 			;
 
 		UART1_DR = data[i];

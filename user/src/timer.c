@@ -33,6 +33,7 @@ uint8_t timer_stop(){
 uint8_t timer_start()
 {	
 	TIM1_Cmd(ENABLE);
+	ticks_second = 0;
 	enableInterrupts();
 	return 0;
 }

@@ -28,12 +28,11 @@ uint8_t msg_send(uint8_t type, uint8_t dev_status, SENSOR_STATUS_T sensor_status
 	uint8_t network_type, signal_strength;
 	static char tx_buffer[MSG_TX_BUFFER_SIZE];
 	static char sn[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-	//0.init dtu
-	dtu_init();
+
 	//1. wait for dtu online
 	if(dtu_online() != 0)
 	{
-		return ERROR;
+		//return ERROR;
 	}
 
 	//2. check registration
@@ -60,7 +59,7 @@ uint8_t msg_send(uint8_t type, uint8_t dev_status, SENSOR_STATUS_T sensor_status
 	}
 
 	//5. pack massage
-	if(type == MSG_TYPE_ALARM)
+	if(type == MSG_TYPE_ALARM)			      
 	{
 		sprintf(tx_buffer, MSG_ALARM_FORMAT, sn, network_type, signal_strength, 
 			(uint8_t) sensor_status[0].status, 
@@ -77,18 +76,14 @@ uint8_t msg_send(uint8_t type, uint8_t dev_status, SENSOR_STATUS_T sensor_status
 	}
 
 	//6. send message
-	if(dtu_httppost(SERVER_URL, POST_HEADER, tx_buffer, SERVER_PATH, 30) == 0)
+	if(dtu_httppost(SERVER_URL, POST_HEADER, tx_buffer, SERVER_PATH, 60) == 0)
 	{
-		dtu_close();
 		sn_ok = 1;
 		return SUCCESS;
 	}
 	else
 	{
-		dtu_close();
 		return ERROR;
 	}
 }
-
-
 

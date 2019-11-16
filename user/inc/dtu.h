@@ -66,5 +66,4 @@ uint8_t	dtu_get_signal(uint8_t *signal_strength);
 
 
 
-
 #endif

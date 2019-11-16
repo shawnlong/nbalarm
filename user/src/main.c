@@ -1,3 +1,4 @@
+
 /*******************************************************************************
 file: main.c
 Company: Leadien
@@ -42,11 +43,11 @@ Function: Monitoring 3 switch-type sensors and report state change to server,
 #define STATE_NUMBER			13
 
 #define FACTORY_TEST_COUNT		5
-#define FACTORY_TEST_PERIOD		AWU_ONE_SECONDS
+#define FACTORY_TEST_PERIOD 	AWU_ONE_SECONDS
 
 static uint8_t NEXT_STATE[STATE_NUMBER] =
 {
-	STATE_FACTORY_TEST,
+	STATE_FACTORY_TEST, 
 	STATE_INSPECTION, 
 	STATE_ALARM_2, 
 	STATE_ALARM_3, 
@@ -64,7 +65,7 @@ static uint8_t NEXT_STATE[STATE_NUMBER] =
 
 static uint32_t SLEEP_PERIODS[STATE_NUMBER] =
 {
-	FACTORY_TEST_PERIOD,
+	FACTORY_TEST_PERIOD, 
 	AWU_ONE_DAY, 
 	AWU_ONE_MINUTE, 
 	AWU_ONE_MINUTE * 10, 
@@ -83,113 +84,89 @@ static uint32_t SLEEP_PERIODS[STATE_NUMBER] =
 main()
 {
 	uint8_t sensor_change = SENSORS_UNCHANGED;
-	uint8_t state = STATE_FACTORY_TEST;
+	uint8_t state = STATE_INSPECTION;
 	uint8_t state_before_retry = STATE_INSPECTION;
 	SENSOR_STATUS_T * sensor_status;
-	SENSOR_STATUS_T retry_sensor_status[SENSOR_NUMBER];
-	uint8_t i, factory_test_times = 0;
-	
-
+	uint8_t ret, msg_type, factory_test_times = 0;
+        awu_init();
+	timer_init();
+	battery_adc_init();
 	while(1)
 	{
 		//0.initilize board
-		CLK_HSIPrescalerConfig(CLK_PRESCALER_HSIDIV8);/*16M/8=2Mhz clock*/
-		awu_init();
-    	sensor_init();
-		timer_init();
+		CLK_HSIPrescalerConfig(CLK_PRESCALER_HSIDIV8); /*16M/8=2Mhz clock*/
+		sensor_init();
 		timer_start();
+
 		//1.check sensors
-		if(state >= STATE_RETRY_1)
-		{
-			sensor_change = SENSORS_UNCHANGED;
-			sensor_status = retry_sensor_status;
-		}else{
-			sensor_change = sensor_get_change();
-			sensor_status = sensor_get_status();
-		}
+		sensor_change = sensor_get_change();
+		sensor_status = sensor_get_status();
+
 		//2.if new sensor open, alarm speaker
 		if(sensor_change == SENSORS_NEW_OPENED)
 		{
 			speaker_init();
-			speaker_alarm();						
+			speaker_alarm();
 		}
 
-		//3.update state
-		if(sensor_change == SENSORS_UNCHANGED)
-		{
-			state = NEXT_STATE[state];
+		//3.send message to server
+		if(sensor_change == SENSORS_UNCHANGED && state == STATE_INSPECTION)
+		{ 
+			msg_type = MSG_TYPE_STATUS;
+		}else{
+			msg_type = MSG_TYPE_ALARM;
 		}
-		else
-		{
-			state = STATE_ALARM_1;
-		}
-
-		//4.send message to server
-		//4.1 if in inspection action, report device health status
-		if((state == STATE_INSPECTION))
-		{
-			battery_adc_init();
-			msg_send(MSG_TYPE_STATUS, battery_get_status(), 0, 0);
-			battery_adc_close();
-		}
-		else
-		{
-			//4.2 if not inspection state, send alarm message
-			if(sensor_change == SENSORS_JUST_ALL_CLOSED)
-			{
-				state = STATE_INSPECTION;
-			}
-
-			if(msg_send(MSG_TYPE_ALARM, 0, sensor_status, SENSOR_NUMBER) != SUCCESS)
-			{
-				//retry action
-				if(state < STATE_RETRY_1)
-				{
-					for(i = 0; i < SENSOR_NUMBER; i++)
-					{
-						retry_sensor_status[i].status = sensor_status[i].status;
-						retry_sensor_status[i].open_count = sensor_status[i].open_count;
-						retry_sensor_status[i].close_count = sensor_status[i].close_count;
-					}
-					state_before_retry = state;
-					state = STATE_RETRY_1;
-				}
-			}
-			else
-			{
-				//secceed, exit retry
-				if(state >= STATE_RETRY_1)
-				{
-					state = state_before_retry;
-				}
-
-			}
-		}
-
-		//5.close unused peripheral and modules to save power
+		dtu_init();
+		ret = msg_send(msg_type, battery_get_status(), sensor_status, SENSOR_NUMBER);
+		dtu_close();
+		
+		//4.wait for speaker play finish
 		while(speaker_check_playing() == 1)
 			;
 
 		speaker_close();
 
-		//gpio_close_all();
-
-		//6.sleep 
-		//check sensor change before sleep
-		if(sensor_get_change() == SENSORS_UNCHANGED)
+		/*5.if factory test, continue*/
+		if(++factory_test_times <= FACTORY_TEST_COUNT)
 		{
-			awu_sleep(SLEEP_PERIODS[state]);
-		}else{
-		//else restart cycle to alarm new
-			awu_sleep(1);
-        }
-		if(state == STATE_FACTORY_TEST && ++factory_test_times >= FACTORY_TEST_COUNT)
-		{
-			state = STATE_INSPECTION;
+			continue;
 		}
+
+		//6.update state
+		if(state < STATE_RETRY_1)
+		{
+			if(ret == SUCCESS){
+				if(sensor_change == SENSORS_NEW_CLOSED || sensor_change == SENSORS_NEW_OPENED)
+				{
+					state = STATE_ALARM_1;
+				}
+
+				if(sensor_change == SENSORS_UNCHANGED)
+				{
+					state = NEXT_STATE[state];
+				}
+
+				if(sensor_change == SENSORS_JUST_ALL_CLOSED)
+				{
+					state = STATE_INSPECTION;
+				}
+			}else{
+				state_before_retry = state;
+				state = STATE_RETRY_1;
+			}
+		}
+		else{
+			if(ret == SUCCESS){
+				state = state_before_retry;
+			}else{
+				state = NEXT_STATE[state];
+			}
+		}
+		
+		//6.sleep 
+		awu_sleep(SLEEP_PERIODS[state]);
 	}
 }
-
 
 
 
