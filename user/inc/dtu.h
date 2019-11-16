@@ -48,7 +48,7 @@
 
 #define DTU_NET_TYPE_NB		1
 #define DTU_NET_TYPE_GPRS	2
-#define DTU_CONTENT_MAX_SIZE	256
+#define DTU_CONTENT_MAX_SIZE	127
 
 
 

@@ -2,7 +2,9 @@
 #include "stm8s.h"
 #include "uart.h"
 #include "timer.h"
+#include "stdio.h"
 
+__IO uint8_t uart1_rx_buffer[];
 /*
   function:uart_init
 		initialize the uart
@@ -30,17 +32,32 @@ uint8_t uart_init(uint8_t id, uint16_t baudrate)
 		0 - success
 		n - error code
 */
-uint8_t uart_send(char * data, uint8_t len)
+uint8_t uart_send(char * data, uint8_t len, UART_Send_Mode_Typedef mode)
 {
 	uint8_t i;
-        uint32_t tick = timer_get_tick();
+	char hex[2];
+    uint32_t tick = timer_get_tick();
 
 	for(i = 0; i < len; i++)
 	{
 		while((UART1_GetFlagStatus(UART1_FLAG_TXE)) == 0x00 && (timer_get_tick() - tick < 2))
 			;
-
-		UART1_SendData8(data[i]);
+		if(mode == UART_SEND_MODE_CHAR)
+		{
+			UART1_SendData8(data[i]);
+		}else{
+			//sprintf(hex,"%x",data[i]);
+			hex[0] = data[i]/16 + '0';
+			hex[1] = data[i]%16 + '0';
+			if(hex[1] > '9')
+			{
+				hex[1] += 'A' - ':';
+			}
+			UART1_SendData8(hex[0]);
+			while((UART1_GetFlagStatus(UART1_FLAG_TXE)) == 0x00 && (timer_get_tick() - tick < 2))
+				;
+			UART1_SendData8(hex[1]);
+		}
 	}
 
 	return 0;

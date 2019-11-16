@@ -19,8 +19,6 @@ Function: Monitoring 3 switch-type sensors and report state change to server,
 #include "stm8s_clk.h"
 #include "timer.h"
 
-extern __IO uint8_t sensor_interrupt;
-
 /*Action rules:
 1.Snesor opened, send alarm message immediately
 2.if send succeed, waiting for sensor close, and send alarm messge after 1m、10m、1hour、per 24hours
@@ -165,10 +163,8 @@ main()
 		}
 		
 		//6.sleep 
-		if(sensor_interrupt == 1)
+		if(sensor_get_change() == SENSORS_UNCHANGED)
 		{
-			sensor_interrupt = 0;
-		}else{
 			awu_sleep(SLEEP_PERIODS[state]);
 		}
 	}

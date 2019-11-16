@@ -16,10 +16,16 @@ static char * at_cmd(char * cmd, char * option)
 	uint8_t i = 0;
 	char ch;
 	uint32_t tick = timer_get_tick();
-
-	uart_send(cmd, strlen(cmd));
-	uart_send(option, strlen(option));
-	uart_send("\r\n", 2);
+	
+	uart_send(cmd, strlen(cmd), UART_SEND_MODE_CHAR);
+	if(strcmp(cmd, AT_CMD_HTTPCONTENT) == 0)
+	{
+		uart_send(option, strlen(option), UART_SEND_MODE_HEX);
+		uart_send(",1",2,UART_SEND_MODE_CHAR);	
+	}else{
+		uart_send(option, strlen(option),UART_SEND_MODE_CHAR);
+	}
+	uart_send("\r\n", 2, UART_SEND_MODE_CHAR);
 
 	//receive the response,strip '\r'and'\n'
 
@@ -167,8 +173,6 @@ uint8_t dtu_check_reg()
 
 	if(response[11] == '1' | response[11] == '5')
 	{
-		
-//	at_cmd(AT_CMD_ATE, "0");
 		return 0;
 	}
 	else
@@ -194,32 +198,29 @@ uint8_t dtu_httppost(char * url, char * header, char * content, char * path, uin
     uint16_t len = strlen(content);
 	char *pos = content;
 	char cut1,cut2;
-	//at_cmd(AT_CMD_ATE, "1");
 
 	at_cmd(AT_CMD_HTTPCREATE, url);
-	
 	at_cmd(AT_CMD_HTTPHEADER, header);
-	//at_cmd("AT+HTTPHEADER=0","");
+
+
 	do
 	{
 		if(len > DTU_CONTENT_MAX_SIZE)
 		{
 			cut1 = pos[DTU_CONTENT_MAX_SIZE-1];
-			cut2 = pos[DTU_CONTENT_MAX_SIZE-2];
-			pos[DTU_CONTENT_MAX_SIZE-2] = '"';
 			pos[DTU_CONTENT_MAX_SIZE-1] = '\0';
 			at_cmd(AT_CMD_HTTPCONTENT, pos);
-			pos[DTU_CONTENT_MAX_SIZE-2] = cut2;
+			at_cmd("AT+HTTPCONTENT=0","");
 			pos[DTU_CONTENT_MAX_SIZE-1] = cut1;
-			pos[DTU_CONTENT_MAX_SIZE-3] = '"';
-			pos += DTU_CONTENT_MAX_SIZE - 3;
-			len -= DTU_CONTENT_MAX_SIZE - 2;
+			pos += DTU_CONTENT_MAX_SIZE - 1;
+			len -= DTU_CONTENT_MAX_SIZE - 1;
 		}else{
 			at_cmd(AT_CMD_HTTPCONTENT, pos);
+			at_cmd("AT+HTTPCONTENT=0","");
 			break;
 		}
 	}while(len > 0);
-	//at_cmd("AT+HTTPCONTENT=0","");
+	
 	at_cmd(AT_CMD_HTTPSEND, path);
 	response = waitfor_response(timeout, HTTP_ACK_OK, HTTP_ACK_FAIL);
 	at_cmd(AT_CMD_HTTPCLOSE, "=0");
