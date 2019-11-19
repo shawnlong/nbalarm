@@ -3,8 +3,6 @@
 #include "uart.h"
 #include "timer.h"
 #include "stdio.h"
-
-__IO uint8_t uart1_rx_buffer[];
 /*
   function:uart_init
 		initialize the uart
@@ -18,6 +16,7 @@ uint8_t uart_init(uint8_t id, uint16_t baudrate)
 {
 	UART1_Init((uint32_t)57600, UART1_WORDLENGTH_8D, UART1_STOPBITS_1, UART1_PARITY_NO,
               UART1_SYNCMODE_CLOCK_DISABLE, UART1_MODE_TXRX_ENABLE);
+	//UART1_ITConfig(UART1_IT_TypeDef UART1_IT, FunctionalState NewState)
 	return 0;
 }
 
@@ -74,7 +73,8 @@ uint8_t uart_send(char * data, uint8_t len, UART_Send_Mode_Typedef mode)
 */
 uint8_t uart_getchar(char * data)
 {
-	if(UART1->SR & UART1_FLAG_RXNE){
+	uint8_t sr = UART1->SR;
+	if(sr & UART1_FLAG_RXNE || sr & UART1_FLAG_OR){
 		*data = UART1->DR;
 		return 0;
 	}

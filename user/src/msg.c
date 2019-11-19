@@ -24,11 +24,11 @@ return:
 */
 uint8_t msg_send(uint8_t type, uint8_t dev_status, SENSOR_STATUS_T sensor_status[], uint8_t sensor_number)
 {
-	static uint8_t msg_serial = 0, sn_ok = 0;
+	static uint8_t i, msg_serial = 0, sn_ok = 0;
 	uint8_t network_type, signal_strength;
 	static char tx_buffer[MSG_TX_BUFFER_SIZE];
 	static char sn[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-
+	
 	//1. wait for dtu online
 	if(dtu_online() != 0)
 	{
@@ -76,7 +76,7 @@ uint8_t msg_send(uint8_t type, uint8_t dev_status, SENSOR_STATUS_T sensor_status
 	}
 
 	//6. send message
-	if(dtu_httppost(SERVER_URL, POST_HEADER, tx_buffer, SERVER_PATH, 60) == 0)
+	if(dtu_httppost(SERVER_URL, POST_HEADER, tx_buffer, SERVER_PATH, 30) == 0)
 	{
 		sn_ok = 1;
 		return SUCCESS;

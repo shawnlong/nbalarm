@@ -9,7 +9,7 @@ TriggerName=main
 LimitSize=0
 ByteLimit=50
 [DebugChecksum]
-Checksum=-1854338992
+Checksum=2069863381
 [CallStack]
 ShowArgs=0
 [Disassembly]
@@ -51,6 +51,9 @@ Enabled=0
 ShowSource=1
 [BreakpointUsageDialog]
 Placement=_ 418 239 863 522
+[SfrWindow]
+Show=1 1
+Sort=4 0
 [watch_formats]
 Fmt0={W}0:pos[111]	5	2
 [DataSample]
@@ -59,7 +62,7 @@ GraphEnabled=0
 ShowTimeLog=1
 ShowTimeSum=1
 [Breakpoints]
-Bp0=_ "STD_CODE" "{$PROJ_DIR$\user\src\dtu.c}.218.4" 1 0 0 0 "" 0 ""
+Bp0=_ "STD_CODE" "{$PROJ_DIR$\user\src\stm8s_it.c}.153.2" 1 0 0 0 "" 0 ""
 Count=1
 [Log file]
 LoggingEnabled=_ 0
@@ -69,6 +72,6 @@ Category=_ 0
 LoggingEnabled=_ 0
 LogFile=_ ""
 [Aliases]
-A0=_ "E:\work\coding\nbalarm\code_lib\user\src\dtu.c" ""
+A0=_ "E:\work\coding\nbalarm\code_lib\user\src\stm8s_it.c" ""
 Count=1
 SuppressDialog=0

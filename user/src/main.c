@@ -39,7 +39,7 @@ Function: Monitoring 3 switch-type sensors and report state change to server,
 #define STATE_RETRY_PER_DAY 	11
 #define STATE_NUMBER			12
 
-#define FACTORY_TEST_COUNT		0
+#define FACTORY_TEST_COUNT		5
 
 static uint8_t NEXT_STATE[STATE_NUMBER] =
 {
@@ -74,6 +74,9 @@ static uint32_t SLEEP_PERIODS[STATE_NUMBER] =
 	AWU_ONE_DAY
 };
 
+/*We feed the wwdg in the tim1 inttrupt. To make sure main program not dead,
+  tim1 ISR should watch this flag to be set, in a period of 60seconds*/
+__IO uint8_t live_flag = 0;
 
 main()
 {
@@ -82,25 +85,28 @@ main()
 	uint8_t state_before_retry = STATE_INSPECTION;
 	SENSOR_STATUS_T * sensor_status;
 	uint8_t ret, msg_type;
-        int8_t factory_test_times = 0;
+	uint8_t retry_times = 0;
+    int8_t factory_test_times = 0;
+    //0.initilize board
+    CLK_HSIPrescalerConfig(CLK_PRESCALER_HSIDIV8); /*16M/8=2Mhz clock*/
     awu_init();
 	timer_init();
 	timer_start();
-    sensor_init();
+    sensor_init();        
 	enableInterrupts();
 	/*start windows watchdog*/
 	WWDG_Init(0x7F, 0x7F);//393ms window@2Mhz main clock
-	
 	battery_adc_init();
 	while(1)
 	{
-		//0.initilize board
 		CLK_HSIPrescalerConfig(CLK_PRESCALER_HSIDIV8); /*16M/8=2Mhz clock*/
-	
+		
+		
 		//1.check sensors
 		sensor_change = sensor_get_change();
 		sensor_status = sensor_get_status();
 
+		
 		//2.if new sensor open, alarm speaker
 		if(sensor_change == SENSORS_NEW_OPENED)
 		{
@@ -117,8 +123,8 @@ main()
 		}
 		dtu_init();
 		ret = msg_send(msg_type, battery_get_status(), sensor_status, SENSOR_NUMBER);
+		live_flag = 0xFE;
 		dtu_close();
-		
 		//4.wait for speaker play finish
 		while(speaker_check_playing() == 1)
 			;
@@ -158,15 +164,16 @@ main()
 			if(ret == SUCCESS){
 				state = state_before_retry;
 			}else{
+				if(retry_times ++ > 20)
+				{
+					TIM1_Cmd(DISABLE);//let wwdg reset the cpu
+				}
 				state = NEXT_STATE[state];
 			}
 		}
 		
 		//6.sleep 
-		if(sensor_get_change() == SENSORS_UNCHANGED)
-		{
-			awu_sleep(SLEEP_PERIODS[state]);
-		}
+                awu_sleep(SLEEP_PERIODS[state]);
 	}
 }
 

@@ -7,6 +7,8 @@
 #include "sensor.h"
 #include "gpio.h"
 
+static uint8_t port_value;
+static uint8_t port_value_valid;
 //each sensor status value
 static  SENSOR_STATUS_T sensor_statuses[SENSOR_NUMBER] = {
 	{SENSOR_CLOSE, 0 ,0},
@@ -22,11 +24,30 @@ static GPIO_Pin_TypeDef ID_TO_PIN[SENSOR_NUMBER] =
 {
 	GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7
 };
+
+uint8_t sensor_set_value(uint8_t value){
+	port_value_valid = 1;
+	port_value = value;
+	return 0;
+}
+
+
+static uint8_t sensor_get_value()
+{
+	if(port_value_valid != 0)
+	{
+		port_value_valid = 0;
+		return port_value;
+	}else{
+		return GPIO_ReadInputData(GPIOC);
+	}
+	
+}
 uint8_t sensor_init()
 {
-	GPIO_Init(GPIOC, GPIO_PIN_5, GPIO_MODE_IN_PU_IT);
-	GPIO_Init(GPIOC, GPIO_PIN_6, GPIO_MODE_IN_PU_IT);
-	GPIO_Init(GPIOC, GPIO_PIN_7, GPIO_MODE_IN_PU_IT);
+	GPIO_Init(GPIOC, GPIO_PIN_5, GPIO_MODE_IN_FL_IT);
+	GPIO_Init(GPIOC, GPIO_PIN_6, GPIO_MODE_IN_FL_IT);
+	GPIO_Init(GPIOC, GPIO_PIN_7, GPIO_MODE_IN_FL_IT);
 	EXTI_SetExtIntSensitivity(EXTI_PORT_GPIOC, EXTI_SENSITIVITY_RISE_FALL);
 	return 0;
 }
@@ -50,7 +71,7 @@ SENSOR_STATUS_T *sensor_get_status()
 	uint8_t i, value, new_status;
 	for(i = 0; i < SENSOR_NUMBER; i++)
 	{
-		value = GPIO_ReadInputPin(ID_TO_PORT[i], ID_TO_PIN[i]);
+		value = sensor_get_value() & ID_TO_PIN[i];
 		new_status = (value != 0) ? SENSOR_OPEN: SENSOR_CLOSE;
 		if(new_status == SENSOR_OPEN && sensor_statuses[i].status == SENSOR_CLOSE)
 		{
@@ -71,7 +92,7 @@ uint8_t sensor_get_change()
 	
 	for(i = 0, opened = 0, new_opened = 0, new_closed = 0; i < SENSOR_NUMBER; i++)
 	{
-		new_status = (GPIO_ReadInputPin(ID_TO_PORT[i], ID_TO_PIN[i]) != 0) ? SENSOR_OPEN: SENSOR_CLOSE;
+		new_status = ((sensor_get_value() & ID_TO_PIN[i]) != 0) ? SENSOR_OPEN: SENSOR_CLOSE;
 
   		if(new_status == SENSOR_OPEN)
   		{
@@ -109,6 +130,7 @@ uint8_t sensor_get_change()
 	return SENSORS_UNCHANGED;
 
 }
+
 
 
 

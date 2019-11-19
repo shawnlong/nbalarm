@@ -3,11 +3,11 @@
 
 #include "timer.h"
 /*2Mhz HSI clock condition*/
-#define TIM1_PERSCALE       19999 	/*20K clock devide, 2Mhz/20K = 100hz, 1count = 10ms*/
+#define TIM1_PERSCALE       19999l 	/*20K clock devide, 2Mhz/20K = 100hz, 1count = 10ms*/
 #define TIM1_PERIOD			25	  	/*10ms * 100 = 1s*/
 #define TIM1_REPEATCOUNT	0		/*no repeat*/
 
- __IO uint32_t ticks_quarter_second = 0;
+__IO uint32_t ticks_quarter_second = 0;
 
 uint8_t timer_init()
 {
@@ -40,6 +40,14 @@ uint8_t timer_start()
 uint32_t timer_get_tick()
 {
 	return ticks_quarter_second/4;
+}
+
+uint8_t timer_delay(uint8_t seconds)
+{
+	uint32_t tick = ticks_quarter_second;
+	while(ticks_quarter_second - tick < seconds * 4)
+		;
+	return 0;
 }
 
 

@@ -76,7 +76,7 @@ uint8_t awu_sleep(uint32_t seconds)
 	uint32_t i = 0;
 	static FLASH_LPMode_TypeDef flash_lpmode;
 	/*switch to low power mode here*/
-
+	//timer_stop();
 	/*1.use LPVR*/
 	CLK_DeInit();
 	CLK_SlowActiveHaltWakeUpCmd(ENABLE);
@@ -86,7 +86,7 @@ uint8_t awu_sleep(uint32_t seconds)
 	CLK_FastHaltWakeUpCmd(DISABLE);
 	
 	/*3.set clock source to LSI*/
-	//CLK_ClockSwitchConfig(CLK_SWITCHMODE_AUTO, CLK_SOURCE_LSI, DISABLE, CLK_CURRENTCLOCKSTATE_DISABLE);
+	CLK_ClockSwitchConfig(CLK_SWITCHMODE_AUTO, CLK_SOURCE_LSI, DISABLE, CLK_CURRENTCLOCKSTATE_DISABLE);
 	
 	/*4.close all pripherals but awu*/
 	CLK_PeripheralClockConfig(CLK_PERIPHERAL_I2C, DISABLE);
@@ -99,7 +99,7 @@ uint8_t awu_sleep(uint32_t seconds)
 	CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER4, DISABLE);
 	CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER3, DISABLE);
 	CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER2, DISABLE);
-	//CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER1, DISABLE);
+	CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER1, DISABLE);
 	CLK_PeripheralClockConfig(CLK_PERIPHERAL_ADC, DISABLE);
 	CLK_PeripheralClockConfig(CLK_PERIPHERAL_CAN, DISABLE);
 	CLK_PeripheralClockConfig(CLK_PERIPHERAL_AWU, ENABLE);
@@ -109,6 +109,8 @@ uint8_t awu_sleep(uint32_t seconds)
 	FLASH_SetLowPowerMode(FLASH_LPMODE_POWERDOWN);
 
 	/*6.set gpio pin to float input*/
+	GPIO_Init(GPIOA, GPIO_PIN_1, GPIO_MODE_IN_PU_NO_IT);
+	GPIO_Init(GPIOA, GPIO_PIN_2, GPIO_MODE_IN_PU_NO_IT);
 	GPIO_Init(GPIOA, GPIO_PIN_3, GPIO_MODE_IN_FL_NO_IT);
 	GPIO_Init(GPIOB, GPIO_PIN_4, GPIO_MODE_IN_FL_NO_IT);
 	GPIO_Init(GPIOB, GPIO_PIN_5, GPIO_MODE_IN_FL_NO_IT);
@@ -130,17 +132,23 @@ uint8_t awu_sleep(uint32_t seconds)
 	}
 	for(i = 0; i < seconds; i++)
 	{
-		WWDG_SetCounter(0x7F);
-		halt();
-		if(sensor_interrupt == 1)
+        if(sensor_interrupt != 0)
 		{
+			sensor_set_value(GPIOC->IDR);
 			sensor_interrupt = 0;
 			break;
 		}
+		WWDG_SetCounter(0x7F);
+		halt();
+		
 	}
+	CLK_SlowActiveHaltWakeUpCmd(ENABLE);
+	CLK_ClockSwitchConfig(CLK_SWITCHMODE_AUTO, CLK_SOURCE_HSI, DISABLE, CLK_CURRENTCLOCKSTATE_DISABLE);
+	CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER1, ENABLE);
+	TIM1_Cmd(ENABLE);
 	FLASH_SetLowPowerMode(flash_lpmode);
 	CLK_PeripheralClockConfig(CLK_PERIPHERAL_UART1, ENABLE);
-	CLK_PeripheralClockConfig(CLK_PERIPHERAL_ADC, DISABLE);
+	CLK_PeripheralClockConfig(CLK_PERIPHERAL_ADC, ENABLE);
 	return 0;
 }
 
