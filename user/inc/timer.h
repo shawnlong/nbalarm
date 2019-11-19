@@ -13,6 +13,7 @@ uint8_t timer_close();
 uint8_t timer_stop();
 uint8_t timer_start();
 uint32_t timer_get_tick();
+uint8_t timer_delay(uint8_t seconds);
 
 #endif
 

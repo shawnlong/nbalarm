@@ -8,11 +8,6 @@
 #define SENSOR_OPEN 			1
 #define SENSOR_UNKNOWN			2
 
-#define SENSOR1_PORT_PIN		GPIO_PIN_4
-#define SENSOR2_PORT_PIN		GPIO_PIN_5
-#define SENSOR3_PORT_PIN		GPIO_PIN_6
-#define SENSOR_PORT_MODE 	GPIO_MODE_INPUT|GPIO_MODE_PULL_UP|GPIO_MODE_INT
-//#define SENSOR_PORT_MODE 	GPIO_MODE_INPUT|GPIO_MODE_FLOAT|GPIO_MODE_INT
 
 //all sensors status overview
 #define SENSORS_NEW_CLOSED		0
@@ -30,9 +25,7 @@ uint8_t sensor_init();
 uint8_t sensor_close();
 SENSOR_STATUS_T *sensor_get_status();
 uint8_t sensor_get_change();
-uint8_t sensor_push_status(SENSOR_STATUS_T *status);
-uint8_t sensor_peek_status(SENSOR_STATUS_T *status);
-uint8_t sensor_pop_status(SENSOR_STATUS_T *status);
+uint8_t sensor_set_value(uint8_t value);
 
 
 #endif

@@ -16,12 +16,16 @@ static char * at_cmd(char * cmd, char * option)
 	uint8_t i = 0;
 	char ch;
 	uint32_t tick = timer_get_tick();
-
-	uart_send(cmd, strlen(cmd));
-	uart_send(option, strlen(option));
-	uart_send("\r\n", 2);
-
-	//receive the response,strip '\r'and'\n'
+	
+	uart_send(cmd, strlen(cmd), UART_SEND_MODE_CHAR);
+	if(strcmp(cmd, AT_CMD_HTTPCONTENT) == 0)
+	{
+		uart_send(option, strlen(option), UART_SEND_MODE_HEX);
+		uart_send(",1",2,UART_SEND_MODE_CHAR);	
+	}else{
+		uart_send(option, strlen(option),UART_SEND_MODE_CHAR);
+	}
+	uart_send("\r\n", 2, UART_SEND_MODE_CHAR);
 
 	while(timer_get_tick() - tick < 2)
 	{
@@ -57,7 +61,7 @@ static uint8_t waitfor_response(uint8_t timeout_seconds, char *ok_pattern, char 
 	int8_t ok_pos = -1, fail_pos = -1;
 	uint32_t tick = timer_get_tick();
 	uint8_t ok_len = strlen(ok_pattern);
-	uint8_t fail_len = strlen(fail_pattern);
+	//uint8_t fail_len = strlen(fail_pattern);
 		
 	while(timer_get_tick() - tick < timeout_seconds)
 	{
@@ -73,6 +77,7 @@ static uint8_t waitfor_response(uint8_t timeout_seconds, char *ok_pattern, char 
 		}else{
 			ok_pos = -1;
 		}
+		/*
 		if(ch == fail_pattern[fail_pos + 1])
 		{
 			fail_pos++;
@@ -82,7 +87,7 @@ static uint8_t waitfor_response(uint8_t timeout_seconds, char *ok_pattern, char 
 			}
 		}else{
 			fail_pos = -1;
-		}
+		}*/
 	}
 	return ACK_FAIL;
 }
@@ -99,18 +104,13 @@ static uint8_t waitfor_response(uint8_t timeout_seconds, char *ok_pattern, char 
 */
 uint8_t dtu_init()
 {
-	//uint16_t i;
-        //init the GPIO and power on 
-	//NB power enable io output
 	uart_init(1, 57600);
+	UART1_Cmd(ENABLE);
 	GPIO_Init(GPIOC, GPIO_PIN_3, GPIO_MODE_OUT_PP_LOW_SLOW);
-	GPIO_Init(GPIOD, GPIO_PIN_2, GPIO_MODE_OUT_PP_LOW_SLOW);
-
-	//GPIO_WriteLow(GPIOC, GPIO_PIN_3);
-	//for(i = 0; i < 1024; i ++);
+	//GPIO_Init(GPIOD, GPIO_PIN_2, GPIO_MODE_OUT_PP_HIGH_SLOW);
+	GPIO_Init(GPIOD, GPIO_PIN_4, GPIO_MODE_OUT_PP_LOW_SLOW);
 	GPIO_WriteHigh(GPIOC, GPIO_PIN_3);
-
-    at_cmd(AT_CMD_AT,"");
+	timer_delay(1);
 	at_cmd(AT_CMD_CFGDUALMODE,"1");
 	at_cmd(AT_CMD_CFGRATRRIO,"4");
 	return 0;
@@ -120,11 +120,12 @@ uint8_t dtu_init()
 close power or sleep*/
 uint8_t dtu_close()
 {
-	uint16_t i;
-	GPIO_WriteLow(GPIOC, GPIO_PIN_3);
+	UART1_DeInit();
+	UART1_Cmd(DISABLE);
 
+	GPIO_WriteLow(GPIOC, GPIO_PIN_3);
 	//wait for a while to power down dtu
-	for(i = 0; i < 10240; i ++);
+	timer_delay(1);
 
 	return 0;
 }
@@ -133,12 +134,15 @@ uint8_t dtu_close()
 uint8_t dtu_reset()
 {
 	GPIO_WriteHigh(GPIOD, GPIO_PIN_2);
+	timer_delay(1);
 	GPIO_WriteLow(GPIOD, GPIO_PIN_2);
+	timer_delay(1);
+	GPIO_WriteHigh(GPIOD, GPIO_PIN_2);
 	return 0;
 }
 
 uint8_t dtu_online(){
-	if(waitfor_response(60, DTU_ONLINE,HTTP_CONNECT_ERROR) != ACK_OK) 
+	if(waitfor_response(30, DTU_ONLINE,HTTP_CONNECT_ERROR) != ACK_OK) 
 	{
 		return 1;
 	}
@@ -167,8 +171,6 @@ uint8_t dtu_check_reg()
 
 	if(response[11] == '1' | response[11] == '5')
 	{
-		
-//	at_cmd(AT_CMD_ATE, "0");
 		return 0;
 	}
 	else
@@ -193,33 +195,28 @@ uint8_t dtu_httppost(char * url, char * header, char * content, char * path, uin
 	uint8_t response;
     uint16_t len = strlen(content);
 	char *pos = content;
-	char cut1,cut2;
-	//at_cmd(AT_CMD_ATE, "1");
-
+	char cut1;
 	at_cmd(AT_CMD_HTTPCREATE, url);
-	
 	at_cmd(AT_CMD_HTTPHEADER, header);
-	//at_cmd("AT+HTTPHEADER=0","");
+
+	at_cmd(AT_CMD_ATE,"0");
 	do
 	{
 		if(len > DTU_CONTENT_MAX_SIZE)
 		{
 			cut1 = pos[DTU_CONTENT_MAX_SIZE-1];
-			cut2 = pos[DTU_CONTENT_MAX_SIZE-2];
-			pos[DTU_CONTENT_MAX_SIZE-2] = '"';
 			pos[DTU_CONTENT_MAX_SIZE-1] = '\0';
 			at_cmd(AT_CMD_HTTPCONTENT, pos);
-			pos[DTU_CONTENT_MAX_SIZE-2] = cut2;
 			pos[DTU_CONTENT_MAX_SIZE-1] = cut1;
-			pos[DTU_CONTENT_MAX_SIZE-3] = '"';
-			pos += DTU_CONTENT_MAX_SIZE - 3;
-			len -= DTU_CONTENT_MAX_SIZE - 2;
+			pos += DTU_CONTENT_MAX_SIZE - 1;
+			len -= DTU_CONTENT_MAX_SIZE - 1;
 		}else{
 			at_cmd(AT_CMD_HTTPCONTENT, pos);
+			at_cmd("AT+HTTPCONTENT=0","");
 			break;
 		}
 	}while(len > 0);
-	//at_cmd("AT+HTTPCONTENT=0","");
+	at_cmd(AT_CMD_ATE,"1");
 	at_cmd(AT_CMD_HTTPSEND, path);
 	response = waitfor_response(timeout, HTTP_ACK_OK, HTTP_ACK_FAIL);
 	at_cmd(AT_CMD_HTTPCLOSE, "=0");

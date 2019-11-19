@@ -222,7 +222,11 @@ E:\work\coding\nbalarm\code_lib\user\inc
 -D__HAS_LOCATED_WITH_INIT__=1
 -D__IAR_COMPILERBASE__=593160
 -D__DATE__="Nov 19 2019"
+<<<<<<< HEAD
 -D__TIME__="12:21:51"
+=======
+-D__TIME__="00:11:49"
+>>>>>>> interrupt-uart-rx
 -D__STDC__=1
 -D__STDC_VERSION__=199901L
 -D__STDC_HOSTED__=1
