@@ -2,10 +2,11 @@
 #include "stm8s.h"
 
 #include "awu.h"
+#include "sensor.h"
 
 extern __IO uint8_t sensor_interrupt;
 
-
+uint8_t last_port_value = 0;
 
 static uint32_t LSIMeasurment(void)
 {
@@ -134,13 +135,14 @@ uint8_t awu_sleep(uint32_t seconds)
 	{
         if(sensor_interrupt != 0)
 		{
-			sensor_set_value(GPIOC->IDR);
 			sensor_interrupt = 0;
-			break;
+			if(GPIO_ReadInputData(GPIOC) != last_port_value)
+			{
+				break;
+			}
 		}
 		WWDG_SetCounter(0x7F);
 		halt();
-		
 	}
 	CLK_SlowActiveHaltWakeUpCmd(ENABLE);
 	CLK_ClockSwitchConfig(CLK_SWITCHMODE_AUTO, CLK_SOURCE_HSI, DISABLE, CLK_CURRENTCLOCKSTATE_DISABLE);

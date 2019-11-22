@@ -58,7 +58,7 @@ static char * at_cmd(char * cmd, char * option)
 static uint8_t waitfor_response(uint8_t timeout_seconds, char *ok_pattern, char *fail_pattern)
 {
 	char ch;
-	int8_t ok_pos = -1, fail_pos = -1;
+	int8_t ok_pos = -1;//, fail_pos = -1;
 	uint32_t tick = timer_get_tick();
 	uint8_t ok_len = strlen(ok_pattern);
 	//uint8_t fail_len = strlen(fail_pattern);

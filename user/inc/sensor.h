@@ -23,8 +23,8 @@ typedef struct sensor_status_t{
 
 uint8_t sensor_init();
 uint8_t sensor_close();
-SENSOR_STATUS_T *sensor_get_status();
-uint8_t sensor_get_change();
+uint8_t sensor_get_status(SENSOR_STATUS_T **status);
+//uint8_t sensor_get_change();
 uint8_t sensor_set_value(uint8_t value);
 
 

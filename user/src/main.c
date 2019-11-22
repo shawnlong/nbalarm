@@ -39,7 +39,7 @@ Function: Monitoring 3 switch-type sensors and report state change to server,
 #define STATE_RETRY_PER_DAY 	11
 #define STATE_NUMBER			12
 
-#define FACTORY_TEST_COUNT		5
+#define FACTORY_TEST_COUNT		0
 
 static uint8_t NEXT_STATE[STATE_NUMBER] =
 {
@@ -78,17 +78,9 @@ static uint32_t SLEEP_PERIODS[STATE_NUMBER] =
   tim1 ISR should watch this flag to be set, in a period of 60seconds*/
 __IO uint8_t live_flag = 0;
 
-main()
+static void bsp_init()
 {
-	uint8_t sensor_change = SENSORS_UNCHANGED;
-	uint8_t state = STATE_INSPECTION;
-	uint8_t state_before_retry = STATE_INSPECTION;
-	SENSOR_STATUS_T * sensor_status;
-	uint8_t ret, msg_type;
-	uint8_t retry_times = 0;
-    int8_t factory_test_times = 0;
-    //0.initilize board
-    CLK_HSIPrescalerConfig(CLK_PRESCALER_HSIDIV8); /*16M/8=2Mhz clock*/
+	CLK_HSIPrescalerConfig(CLK_PRESCALER_HSIDIV8); /*16M/8=2Mhz clock*/
     awu_init();
 	timer_init();
 	timer_start();
@@ -97,16 +89,35 @@ main()
 	/*start windows watchdog*/
 	WWDG_Init(0x7F, 0x7F);//393ms window@2Mhz main clock
 	battery_adc_init();
+}
+
+static void bsp_feed_dog()
+{
+	live_flag = 0xFE;
+}
+
+main()
+{
+	uint8_t sensor_change = SENSORS_UNCHANGED;
+	uint8_t state = STATE_INSPECTION;
+	uint8_t state_before_retry = STATE_INSPECTION;
+	SENSOR_STATUS_T * sensor_status;
+	uint8_t ret, msg_type;
+	uint8_t retry_times = 0;
+
+    //0.initilize board
+    bsp_init();
+	
 	while(1)
 	{
+          
 		CLK_HSIPrescalerConfig(CLK_PRESCALER_HSIDIV8); /*16M/8=2Mhz clock*/
-		
+		bsp_feed_dog();
 		
 		//1.check sensors
-		sensor_change = sensor_get_change();
-		sensor_status = sensor_get_status();
+		sensor_change = sensor_get_status(&sensor_status);
+		//sensor_status = sensor_get_status();
 
-		
 		//2.if new sensor open, alarm speaker
 		if(sensor_change == SENSORS_NEW_OPENED)
 		{
@@ -123,21 +134,15 @@ main()
 		}
 		dtu_init();
 		ret = msg_send(msg_type, battery_get_status(), sensor_status, SENSOR_NUMBER);
-		live_flag = 0xFE;
 		dtu_close();
+		bsp_feed_dog();
 		//4.wait for speaker play finish
 		while(speaker_check_playing() == 1)
 			;
 
 		speaker_close();
 
-		/*5.if factory test, continue*/
-		if(++factory_test_times < FACTORY_TEST_COUNT)
-		{
-			continue;
-		}
-
-		//6.update state
+		//5.update state
 		if(state < STATE_RETRY_1)
 		{
 			if(ret == SUCCESS){

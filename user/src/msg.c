@@ -24,7 +24,7 @@ return:
 */
 uint8_t msg_send(uint8_t type, uint8_t dev_status, SENSOR_STATUS_T sensor_status[], uint8_t sensor_number)
 {
-	static uint8_t i, msg_serial = 0, sn_ok = 0;
+	static uint8_t msg_serial = 0, sn_ok = 0;
 	uint8_t network_type, signal_strength;
 	static char tx_buffer[MSG_TX_BUFFER_SIZE];
 	static char sn[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
