@@ -2158,64 +2158,64 @@
         <group>
             <name>inc</name>
             <file>
-                <name>$PROJ_DIR$\lib\inc\stm8s.h</name>
+                <name>$PROJ_DIR$\..\lib\inc\stm8s.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\inc\stm8s_adc1.h</name>
+                <name>$PROJ_DIR$\..\lib\inc\stm8s_adc1.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\inc\stm8s_awu.h</name>
+                <name>$PROJ_DIR$\..\lib\inc\stm8s_awu.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\inc\stm8s_clk.h</name>
+                <name>$PROJ_DIR$\..\lib\inc\stm8s_clk.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\inc\stm8s_exti.h</name>
+                <name>$PROJ_DIR$\..\lib\inc\stm8s_exti.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\inc\stm8s_flash.h</name>
+                <name>$PROJ_DIR$\..\lib\inc\stm8s_flash.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\inc\stm8s_gpio.h</name>
+                <name>$PROJ_DIR$\..\lib\inc\stm8s_gpio.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\inc\stm8s_tim1.h</name>
+                <name>$PROJ_DIR$\..\lib\inc\stm8s_tim1.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\inc\stm8s_uart1.h</name>
+                <name>$PROJ_DIR$\..\lib\inc\stm8s_uart1.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\inc\stm8s_wwdg.h</name>
+                <name>$PROJ_DIR$\..\lib\inc\stm8s_wwdg.h</name>
             </file>
         </group>
         <group>
             <name>src</name>
             <file>
-                <name>$PROJ_DIR$\lib\src\stm8s_adc1.c</name>
+                <name>$PROJ_DIR$\..\lib\src\stm8s_adc1.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\src\stm8s_awu.c</name>
+                <name>$PROJ_DIR$\..\lib\src\stm8s_awu.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\src\stm8s_clk.c</name>
+                <name>$PROJ_DIR$\..\lib\src\stm8s_clk.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\src\stm8s_exti.c</name>
+                <name>$PROJ_DIR$\..\lib\src\stm8s_exti.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\src\stm8s_flash.c</name>
+                <name>$PROJ_DIR$\..\lib\src\stm8s_flash.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\src\stm8s_gpio.c</name>
+                <name>$PROJ_DIR$\..\lib\src\stm8s_gpio.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\src\stm8s_tim1.c</name>
+                <name>$PROJ_DIR$\..\lib\src\stm8s_tim1.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\src\stm8s_uart1.c</name>
+                <name>$PROJ_DIR$\..\lib\src\stm8s_uart1.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\lib\src\stm8s_wwdg.c</name>
+                <name>$PROJ_DIR$\..\lib\src\stm8s_wwdg.c</name>
             </file>
         </group>
     </group>
@@ -2224,70 +2224,67 @@
         <group>
             <name>inc</name>
             <file>
-                <name>$PROJ_DIR$\user\inc\awu.h</name>
+                <name>$PROJ_DIR$\..\user\inc\awu.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\inc\battery.h</name>
+                <name>$PROJ_DIR$\..\user\inc\battery.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\inc\dtu.h</name>
+                <name>$PROJ_DIR$\..\user\inc\dtu.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\inc\msg.h</name>
+                <name>$PROJ_DIR$\..\user\inc\msg.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\inc\sensor.h</name>
+                <name>$PROJ_DIR$\..\user\inc\sensor.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\inc\speaker.h</name>
+                <name>$PROJ_DIR$\..\user\inc\speaker.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\inc\stm8s_conf.h</name>
+                <name>$PROJ_DIR$\..\user\inc\stm8s_conf.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\inc\stm8s_it.h</name>
+                <name>$PROJ_DIR$\..\user\inc\stm8s_it.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\inc\timer.h</name>
+                <name>$PROJ_DIR$\..\user\inc\timer.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\inc\uart.h</name>
+                <name>$PROJ_DIR$\..\user\inc\uart.h</name>
             </file>
         </group>
         <group>
             <name>src</name>
             <file>
-                <name>$PROJ_DIR$\user\src\adc.c</name>
+                <name>$PROJ_DIR$\..\user\src\awu.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\src\awu.c</name>
+                <name>$PROJ_DIR$\..\user\src\battery.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\src\battery.c</name>
+                <name>$PROJ_DIR$\..\user\src\dtu.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\src\dtu.c</name>
+                <name>$PROJ_DIR$\..\user\src\main.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\src\main.c</name>
+                <name>$PROJ_DIR$\..\user\src\msg.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\src\msg.c</name>
+                <name>$PROJ_DIR$\..\user\src\sensor.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\src\sensor.c</name>
+                <name>$PROJ_DIR$\..\user\src\speaker.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\src\speaker.c</name>
+                <name>$PROJ_DIR$\..\user\src\stm8s_it.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\src\stm8s_it.c</name>
+                <name>$PROJ_DIR$\..\user\src\timer.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\user\src\timer.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\user\src\uart.c</name>
+                <name>$PROJ_DIR$\..\user\src\uart.c</name>
             </file>
         </group>
     </group>

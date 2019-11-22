@@ -5,7 +5,7 @@
 #include "stm8s.h"
 
 #include "sensor.h"
-#include "gpio.h"
+
 extern uint8_t last_port_value;
 //each sensor status value
 static  SENSOR_STATUS_T sensor_statuses[SENSOR_NUMBER] = {

@@ -13,9 +13,7 @@ Function: Monitoring 3 switch-type sensors and report state change to server,
 #include "battery.h"
 #include "speaker.h"
 #include "awu.h"
-#include "test.h"
 #include "dtu.h"
-#include "gpio.h"
 #include "stm8s_clk.h"
 #include "timer.h"
 

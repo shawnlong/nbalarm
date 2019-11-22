@@ -2,7 +2,6 @@
 #include "stm8s.h"
 
 #include "speaker.h"
-#include "gpio.h"
 #include "timer.h"
 
 static uint8_t playing;
