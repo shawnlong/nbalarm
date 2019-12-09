@@ -13,6 +13,7 @@ uint8_t awu_sleep(uint32_t seconds);
 #define AWU_ONE_DAY 			(86400l - 4320l)//adjust 72minuts
 #define AWU_INFINITE			0
 
+#define LSI_CALIBRATION 1
 
 #endif
 

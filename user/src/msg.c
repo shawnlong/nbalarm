@@ -27,12 +27,12 @@ uint8_t msg_send(uint8_t type, uint8_t dev_status, SENSOR_STATUS_T sensor_status
 	static uint8_t msg_serial = 0, sn_ok = 0;
 	uint8_t network_type, signal_strength;
 	static char tx_buffer[MSG_TX_BUFFER_SIZE];
-	static char sn[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+	static char sn[DTU_IMEI_LEN+1] = {0};
 	
 	//1. wait for dtu online
 	if(dtu_online() != 0)
 	{
-		//return ERROR;
+		return ERROR;
 	}
 
 	//2. check registration
@@ -52,7 +52,7 @@ uint8_t msg_send(uint8_t type, uint8_t dev_status, SENSOR_STATUS_T sensor_status
 	{
 		return ERROR;
 	}
-
+	
 	if(dtu_get_signal(&signal_strength) != 0)
 	{
 		return ERROR;

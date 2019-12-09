@@ -107,12 +107,13 @@ uint8_t dtu_init()
 	uart_init(1, 57600);
 	UART1_Cmd(ENABLE);
 	GPIO_Init(GPIOC, GPIO_PIN_3, GPIO_MODE_OUT_PP_LOW_SLOW);
-	//GPIO_Init(GPIOD, GPIO_PIN_2, GPIO_MODE_OUT_PP_HIGH_SLOW);
 	GPIO_Init(GPIOD, GPIO_PIN_4, GPIO_MODE_OUT_PP_LOW_SLOW);
 	GPIO_WriteHigh(GPIOC, GPIO_PIN_3);
-	timer_delay(1);
+	timer_delay(9);
+	at_cmd(AT_CMD_ATE, "0");
 	at_cmd(AT_CMD_CFGDUALMODE,"1");
 	at_cmd(AT_CMD_CFGRATRRIO,"4");
+
 	return 0;
 }
 
@@ -130,7 +131,7 @@ uint8_t dtu_close()
 	return 0;
 }
 
-
+#if 0
 uint8_t dtu_reset()
 {
 	GPIO_WriteHigh(GPIOD, GPIO_PIN_2);
@@ -140,6 +141,7 @@ uint8_t dtu_reset()
 	GPIO_WriteHigh(GPIOD, GPIO_PIN_2);
 	return 0;
 }
+#endif
 
 uint8_t dtu_online(){
 	if(waitfor_response(30, DTU_ONLINE,HTTP_CONNECT_ERROR) != ACK_OK) 
@@ -199,7 +201,6 @@ uint8_t dtu_httppost(char * url, char * header, char * content, char * path, uin
 	at_cmd(AT_CMD_HTTPCREATE, url);
 	at_cmd(AT_CMD_HTTPHEADER, header);
 
-	at_cmd(AT_CMD_ATE,"0");
 	do
 	{
 		if(len > DTU_CONTENT_MAX_SIZE)
@@ -216,7 +217,6 @@ uint8_t dtu_httppost(char * url, char * header, char * content, char * path, uin
 			break;
 		}
 	}while(len > 0);
-	at_cmd(AT_CMD_ATE,"1");
 	at_cmd(AT_CMD_HTTPSEND, path);
 	response = waitfor_response(timeout, HTTP_ACK_OK, HTTP_ACK_FAIL);
 	at_cmd(AT_CMD_HTTPCLOSE, "=0");
@@ -243,6 +243,10 @@ uint8_t dtu_get_imei(char * imei)
 		for(i = 0; i < DTU_IMEI_LEN; i++)
 		{
 			imei[i] = response[i];
+			if(imei[i] < '0' || imei[i] > '9')
+			{
+				return 1;
+			}
 		}
 	}
 
@@ -293,7 +297,10 @@ uint8_t dtu_get_signal(uint8_t * signal_strength)
 	else
 	{
 		response = strstr(response, ",");
-		*signal_strength = (response[-2] - '0') * 10 + (response[-1] - '0');
+		if(response[-2] > '0' && response[-2] <= '9'){
+			*signal_strength = (response[-2] - '0') * 10;
+		}
+		*signal_strength += (response[-1] - '0');
 	}
 
 	return 0;

@@ -8,6 +8,7 @@ extern __IO uint8_t sensor_interrupt;
 
 uint8_t last_port_value = 0;
 
+#if LSI_CALIBRATION
 static uint32_t LSIMeasurment(void)
 {
 	uint32_t lsi_freq_hz = 0x0;
@@ -60,13 +61,15 @@ static uint32_t LSIMeasurment(void)
 	return (lsi_freq_hz);
 }
 
-
+#endif
 
 
 uint8_t awu_init()
 {
 	AWU_Cmd(ENABLE);
+#if LSI_CALIBRATION
 	AWU_LSICalibrationConfig(LSIMeasurment());
+#endif
 	AWU_Init(AWU_TIMEBASE_1S);
 	return 0;
 }

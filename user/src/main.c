@@ -38,6 +38,7 @@ Function: Monitoring 3 switch-type sensors and report state change to server,
 #define STATE_NUMBER			12
 
 #define FACTORY_TEST_COUNT		0
+#define MAX_RETRY_TIMES			10
 
 static uint8_t NEXT_STATE[STATE_NUMBER] =
 {
@@ -82,7 +83,7 @@ static void bsp_init()
     awu_init();
 	timer_init();
 	timer_start();
-    sensor_init();        
+    sensor_init();      
 	enableInterrupts();
 	/*start windows watchdog*/
 	WWDG_Init(0x7F, 0x7F);//393ms window@2Mhz main clock
@@ -110,6 +111,7 @@ main()
 	{
           
 		CLK_HSIPrescalerConfig(CLK_PRESCALER_HSIDIV8); /*16M/8=2Mhz clock*/
+	
 		bsp_feed_dog();
 		
 		//1.check sensors
@@ -167,9 +169,9 @@ main()
 			if(ret == SUCCESS){
 				state = state_before_retry;
 			}else{
-				if(retry_times ++ > 20)
+				if(retry_times ++ > MAX_RETRY_TIMES)
 				{
-					TIM1_Cmd(DISABLE);//let wwdg reset the cpu
+					while(1);//let wwdg reset the cpu
 				}
 				state = NEXT_STATE[state];
 			}

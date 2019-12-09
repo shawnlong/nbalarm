@@ -65,11 +65,11 @@
                 <option>
                     <name>GenLibInFormatter</name>
                     <version>0</version>
-                    <state>6</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>GenLibInFormatterDescription</name>
-                    <state>No specifier n, no float, no scan set, no assignment suppressing, without multibytes.</state>
+                    <state>Automatic choice of formatter.</state>
                 </option>
                 <option>
                     <name>GenLibOutFormatter</name>
@@ -113,11 +113,11 @@
                 <option>
                     <name>GenMathFunctionVariant</name>
                     <version>0</version>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>GenMathFunctionDescription</name>
-                    <state>Default variants of cos, sin, tan, log, log10, pow, and exp.</state>
+                    <state>Smaller size, higher execution speed, less precision, smaller input range.</state>
                 </option>
             </data>
         </settings>
@@ -358,7 +358,7 @@
                 </option>
                 <option>
                     <name>AsmListFile</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>AsmListNoDiagnostics</name>
@@ -726,7 +726,7 @@
                 </option>
                 <option>
                     <name>IlinkCspyDebugSupportEnable</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>IlinkCspyBufferedWrite</name>
@@ -764,7 +764,7 @@
                 </option>
                 <option>
                     <name>IlinkOptMergeDuplSections</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>IlinkIcfFile_AltDefault</name>

@@ -28,6 +28,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm8s_it.h"
 #include "sensor.h"
+#include "uart.h"
 //#include "stm8s_eval.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -35,8 +36,14 @@
 /* Private variables ---------------------------------------------------------*/
 //extern uint16_t Conversion_Value;
 extern __IO uint32_t ticks_quarter_second;
-extern __IO uint8_t uart1_rx_buffer[];
 extern __IO uint8_t live_flag;
+
+#if INTERRUPT_ENABLE
+extern __IO uint8_t uart1_rx_buffer[];
+extern __IO uint8_t uart1_rx_head;
+extern __IO uint8_t uart1_rx_tail;
+extern __IO uint8_t uart1_rx_count;
+#endif 
 __IO uint8_t sensor_interrupt = 0;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -253,7 +260,7 @@ INTERRUPT_HANDLER(TIM1_UPD_OVF_TRG_BRK_IRQHandler, 11)
 	TIM1_ClearITPendingBit(TIM1_IT_UPDATE);
 	ticks_quarter_second++;
 
-	if(live_ticks++ > 250)
+	if(live_ticks++ > 240)
 	{
 		live_ticks = 0;
 		if(live_flag != 0xFE)
@@ -398,6 +405,27 @@ INTERRUPT_HANDLER(UART1_RX_IRQHandler, 18)
 	/* In order to detect unexpected events during development,
 	   it is recommended to set a breakpoint on the following instruction.
 	*/
+#if INTERRUPT_ENABLE
+	uint8_t u8RxByte;
+	/* Get the character from UART Buffer */
+	if(UART1->SR & UART1_SR_OR)
+	{
+		UART1->SR &= ~UART1_SR_OR;
+	}
+		
+		u8RxByte = UART1_ReceiveData8();
+
+		/* Check if buffer full */
+		if (uart1_rx_count < UART1_RX_BUFFER_SIZE)
+		{
+			/* Enqueue the character */
+			uart1_rx_buffer[uart1_rx_tail] = u8RxByte;
+			uart1_rx_tail = (uart1_rx_tail == (UART1_RX_BUFFER_SIZE -1))?0:(uart1_rx_tail+1);
+			uart1_rx_count++;
+		}
+		UART1_ClearITPendingBit(UART1_IT_RXNE);
+
+#endif
 }
 
 

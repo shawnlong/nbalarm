@@ -31,7 +31,8 @@
 #define AT_CMD_PING				"AT+CMPING="
 #define AT_CMD_CFGDUALMODE		"AT+CFGDUALMODE=1,"
 #define AT_CMD_CFGRATRRIO		"AT+CFGRATPRIO="
-#define RX_BUFFER_SIZE			100
+#define AT_CMD_CLOCK			"AT+CCLK?"
+#define RX_BUFFER_SIZE			50
 #define DTU_IMEI_LEN			15
 #define ACK_OK					0
 #define ACK_FAIL				1

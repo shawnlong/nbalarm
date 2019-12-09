@@ -6,7 +6,8 @@
 #include "sensor.h"
 #define MSG_TX_BUFFER_SIZE		280
 
-#define SERVER_URL				"\"http://test.answer2u.com/\""
+//#define SERVER_URL				"\"http://test.answer2u.com/\""
+#define SERVER_URL				"\"http://power.cadywell.com/\""
 #define SERVER_PATH 			"\"/API/Device/Index\""
 
 #define POST_HEADER				"\"Content-Type:application/json\\r\\n\""
