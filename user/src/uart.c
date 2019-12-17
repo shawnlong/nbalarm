@@ -18,9 +18,9 @@ __IO uint8_t uart1_rx_count = 0;
 		0 - success
 		n - error code
 */
-uint8_t uart_init(uint8_t id, uint16_t baudrate)
+uint8_t uart_init(uint8_t id, uint32_t baudrate)
 {
-	UART1_Init((uint32_t)57600, UART1_WORDLENGTH_8D, UART1_STOPBITS_1, UART1_PARITY_NO,
+	UART1_Init((uint32_t)baudrate, UART1_WORDLENGTH_8D, UART1_STOPBITS_1, UART1_PARITY_NO,
               UART1_SYNCMODE_CLOCK_DISABLE, UART1_MODE_TXRX_ENABLE);
 #if INTERRUPT_ENABLE
 	UART1_ITConfig(UART1_IT_RXNE_OR, ENABLE);

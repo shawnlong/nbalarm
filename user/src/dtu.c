@@ -2,11 +2,33 @@
 
 #include "stm8s.h"
 #include "string.h"
+#include "msg.h"
+
 #include "dtu.h"
 #include "uart.h"
 #include "timer.h"
 #include "awu.h"
-#include "msg.h"
+
+static uint8_t *int2string(uint32_t n)
+{
+	static uint8_t string[11];
+	uint32_t temp;
+	uint8_t i;
+	for(i = 0; i < 10; i ++)
+	{
+		temp = n % 10;
+		n = n / 10;
+		string[9 - i] = temp + '0';
+	}
+	for(i = 0; i < 10; i ++)
+	{
+		if(string[i] != '0')
+		{
+			return string+i;
+		}
+	}
+	return &(string[9]);
+}
 
 
 static char rx_buffer[RX_BUFFER_SIZE];
@@ -15,7 +37,7 @@ static char * at_cmd(char * cmd, char * option)
 {
 	uint8_t i = 0;
 	char ch;
-	uint32_t tick = timer_get_tick();
+	uint32_t tick; 
 	
 	uart_send(cmd, strlen(cmd), UART_SEND_MODE_CHAR);
 	if(strcmp(cmd, AT_CMD_HTTPCONTENT) == 0)
@@ -26,8 +48,8 @@ static char * at_cmd(char * cmd, char * option)
 		uart_send(option, strlen(option),UART_SEND_MODE_CHAR);
 	}
 	uart_send("\r\n", 2, UART_SEND_MODE_CHAR);
-
-	while(timer_get_tick() - tick < 2)
+	
+	for(tick = timer_get_tick();timer_get_tick() - tick < 3;)
 	{
 		if((uart_getchar(&ch) != 0) || (ch == '\r') || (ch == '\n'))
 		{
@@ -55,13 +77,12 @@ static char * at_cmd(char * cmd, char * option)
 
 
 
-static uint8_t waitfor_response(uint8_t timeout_seconds, char *ok_pattern, char *fail_pattern)
+static uint8_t waitfor_response(uint8_t timeout_seconds, char *ok_pattern)
 {
 	char ch;
-	int8_t ok_pos = -1;//, fail_pos = -1;
+	int8_t ok_pos = -1;
 	uint32_t tick = timer_get_tick();
 	uint8_t ok_len = strlen(ok_pattern);
-	//uint8_t fail_len = strlen(fail_pattern);
 		
 	while(timer_get_tick() - tick < timeout_seconds)
 	{
@@ -77,17 +98,6 @@ static uint8_t waitfor_response(uint8_t timeout_seconds, char *ok_pattern, char 
 		}else{
 			ok_pos = -1;
 		}
-		/*
-		if(ch == fail_pattern[fail_pos + 1])
-		{
-			fail_pos++;
-			if(fail_pos == fail_len - 1)
-			{
-				return ACK_FAIL;
-			}
-		}else{
-			fail_pos = -1;
-		}*/
 	}
 	return ACK_FAIL;
 }
@@ -104,13 +114,35 @@ static uint8_t waitfor_response(uint8_t timeout_seconds, char *ok_pattern, char 
 */
 uint8_t dtu_init()
 {
-	uart_init(1, 57600);
-	UART1_Cmd(ENABLE);
+	static uint8_t configured = 0;
+	
 	GPIO_Init(GPIOC, GPIO_PIN_3, GPIO_MODE_OUT_PP_LOW_SLOW);
 	GPIO_Init(GPIOD, GPIO_PIN_4, GPIO_MODE_OUT_PP_LOW_SLOW);
 	GPIO_WriteHigh(GPIOC, GPIO_PIN_3);
 	timer_delay(9);
-	at_cmd(AT_CMD_ATE, "0");
+#if 1
+	if(configured == 0)
+	{
+		uart_init(1, 57600);
+		UART1_Cmd(ENABLE);
+		at_cmd("at+IPR=","9600");
+		UART1_Cmd(DISABLE);
+		uart_init(1, 9600);
+		UART1_Cmd(ENABLE);
+		timer_delay(2);
+		at_cmd(AT_CMD_W,"");
+		configured = 1;
+	}else{
+		uart_init(1, 9600);
+		UART1_Cmd(ENABLE);
+	}
+#else
+	
+	at_cmd("at+IPR=","57600");
+	at_cmd(AT_CMD_W,"");
+	
+#endif
+	at_cmd(AT_CMD_ATE, "1");
 	at_cmd(AT_CMD_CFGDUALMODE,"1");
 	at_cmd(AT_CMD_CFGRATRRIO,"4");
 
@@ -144,7 +176,7 @@ uint8_t dtu_reset()
 #endif
 
 uint8_t dtu_online(){
-	if(waitfor_response(30, DTU_ONLINE,HTTP_CONNECT_ERROR) != ACK_OK) 
+	if(waitfor_response(30, DTU_ONLINE) != ACK_OK) 
 	{
 		return 1;
 	}
@@ -163,22 +195,23 @@ uint8_t dtu_online(){
 uint8_t dtu_check_reg()
 {
     char *response;
+	uint8_t i;
 
-	response = at_cmd(AT_CMD_CEREG, "?");
-	
-	if((response = strstr(response, "+CEREG:")) == 0)
+	for(i = 0; i < DTU_CHECKREG_RETRY; i ++)
 	{
-		return 1;
-	}
+		response = at_cmd(AT_CMD_CEREG, "?");
+		
+		if((response = strstr(response, "+CEREG:")) == 0)
+		{
+			continue;
+		}
 
-	if(response[11] == '1' | response[11] == '5')
-	{
-		return 0;
+		if(response[11] == '1' | response[11] == '5')
+		{
+			return 0;
+		}
 	}
-	else
-	{
-		return response[11];
-	}
+	return 1;
 }
 
 
@@ -192,40 +225,52 @@ uint8_t dtu_check_reg()
 		0 - success
 		n - error code
 */
-uint8_t dtu_httppost(char * url, char * header, char * content, char * path, uint16_t timeout)
+uint8_t dtu_httppost(char * url, char * header, MSG_T *msg, char * path, uint16_t timeout)
 {
 	uint8_t response;
-    uint16_t len = strlen(content);
-	char *pos = content;
-	char cut1;
 	at_cmd(AT_CMD_HTTPCREATE, url);
 	at_cmd(AT_CMD_HTTPHEADER, header);
 
-	do
+	if(msg->type == MSG_TYPE_ALARM)			      
 	{
-		if(len > DTU_CONTENT_MAX_SIZE)
-		{
-			cut1 = pos[DTU_CONTENT_MAX_SIZE-1];
-			pos[DTU_CONTENT_MAX_SIZE-1] = '\0';
-			at_cmd(AT_CMD_HTTPCONTENT, pos);
-			pos[DTU_CONTENT_MAX_SIZE-1] = cut1;
-			pos += DTU_CONTENT_MAX_SIZE - 1;
-			len -= DTU_CONTENT_MAX_SIZE - 1;
-		}else{
-			at_cmd(AT_CMD_HTTPCONTENT, pos);
-			at_cmd("AT+HTTPCONTENT=0","");
-			break;
-		}
-	}while(len > 0);
+		dtu_add_content("{\"msg\":{\"tm\":", int2string(timer_get_tick() - msg->tm));
+		dtu_add_content(",\"type\":1,\"dev_id\":\"", msg->dev_id);
+		dtu_add_content("\",\"net_type\":",int2string(msg->net_type));
+		dtu_add_content(",\"signal\":",int2string(msg->signal));
+		dtu_add_content(",\"sensor_msg\":[{\"sensor_id\":\"1\",\"sensor_status\":",int2string(msg->sensors[0].status));
+		dtu_add_content(",\"open\":", int2string(msg->sensors[0].open_count));
+		dtu_add_content(",\"close\":", int2string(msg->sensors[0].close_count));
+		dtu_add_content("},{\"sensor_id\":\"2\",\"sensor_status\":",int2string(msg->sensors[1].status));
+		dtu_add_content(",\"open\":", int2string(msg->sensors[1].open_count));
+		dtu_add_content(",\"close\":", int2string(msg->sensors[1].close_count));
+		dtu_add_content("},{\"sensor_id\":\"3\",\"sensor_status\":",int2string(msg->sensors[2].status));
+		dtu_add_content(",\"open\":", int2string(msg->sensors[2].open_count));
+		dtu_add_content(",\"close\":", int2string(msg->sensors[2].close_count));
+		dtu_add_content("}]},\"msg_serial\":", int2string(msg->serial));
+		dtu_add_content("}", "");
+	}
+	else
+	{
+		dtu_add_content("{\"msg\":{\"tm\":", int2string(timer_get_tick() - msg->tm));
+		dtu_add_content(",\"type\":2,\"dev_id\":\"", msg->dev_id);
+		dtu_add_content("\",\"net_type\":",int2string(msg->net_type));
+		dtu_add_content(",\"signal\":", int2string(msg->signal));
+		dtu_add_content(",\"dev_status\":",int2string(msg->status));
+		dtu_add_content("},\"msg_serial\":", int2string(msg->serial));
+		dtu_add_content("}", "");
+	}
+	
+	at_cmd("AT+HTTPCONTENT=0","");
 	at_cmd(AT_CMD_HTTPSEND, path);
-	response = waitfor_response(timeout, HTTP_ACK_OK, HTTP_ACK_FAIL);
+	response = waitfor_response(timeout, HTTP_ACK_OK);
+	at_cmd(AT_CMD_ATE, "1");
 	at_cmd(AT_CMD_HTTPCLOSE, "=0");
 
 	return response;
 }
 
 
-uint8_t dtu_get_imei(char * imei)
+uint8_t dtu_get_imei(uint8_t * imei)
 {
 	char * response;
 	uint8_t i;
@@ -258,7 +303,7 @@ uint8_t dtu_get_imei(char * imei)
 
 uint8_t dtu_get_ntype(uint8_t * network_type)
 {
-	char * response;
+	static char * response;
 
 	response = at_cmd(AT_CMD_COPS, "?");
 
@@ -305,6 +350,23 @@ uint8_t dtu_get_signal(uint8_t * signal_strength)
 
 	return 0;
 }
+
+uint8_t dtu_add_content(uint8_t *index, uint8_t *content)
+{
+	at_cmd(AT_CMD_HTTPCONTENT, (char*)index);
+	if(content[0] != 0)
+	{
+		at_cmd(AT_CMD_HTTPCONTENT, (char*)content);
+	}
+  return 0;
+}
+
+uint8_t dtu_print_n(uint8_t n)
+{
+	at_cmd(AT_CMD_AT, (char*)int2string(n));
+        return 0;
+}
+
 
 
 

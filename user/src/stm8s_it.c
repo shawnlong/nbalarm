@@ -273,7 +273,7 @@ INTERRUPT_HANDLER(TIM1_UPD_OVF_TRG_BRK_IRQHandler, 11)
 		}
 	}
 
-	WWDG_SetCounter(0x7F);
+	//WWDG_SetCounter(0x7F);
 
 }
 

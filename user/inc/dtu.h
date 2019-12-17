@@ -32,25 +32,25 @@
 #define AT_CMD_CFGDUALMODE		"AT+CFGDUALMODE=1,"
 #define AT_CMD_CFGRATRRIO		"AT+CFGRATPRIO="
 #define AT_CMD_CLOCK			"AT+CCLK?"
-#define RX_BUFFER_SIZE			50
+#define RX_BUFFER_SIZE			100
 #define DTU_IMEI_LEN			15
 #define ACK_OK					0
 #define ACK_FAIL				1
 #define ACK_UNKNOWN 			3
-#define HTTP_ACK_OK 			"+HTTPNMIC:0,0,2,2\r\nOK\r\n"
+#define HTTP_ACK_OK 			"+HTTPNMIC:0,0,2,2\r\nOK"
 #define HTTP_ACK_FAIL			"+HTTPNMIC:0,0,4,4\r\nFAIL\r\n"
 
 #define HTTP_CONNECT_ERROR		"CONNECT ERROR"
-#define DTU_ONLINE				"OK"
+#define DTU_ONLINE				"+CTZV:"//"OK"
 
 #define DTU_POWER_PIN		GPIO_PIN_3
 #define DTU_RESET_PIN		GPIO_PIN_7
-#define DTU_WAKEUP_PIN		GPIO_PIN_8
+//#define DTU_WAKEUP_PIN		GPIO_PIN_8
 
 #define DTU_NET_TYPE_NB		1
 #define DTU_NET_TYPE_GPRS	2
 #define DTU_CONTENT_MAX_SIZE	127
-
+#define DTU_CHECKREG_RETRY	3
 
 
 uint8_t dtu_init();
@@ -58,12 +58,14 @@ uint8_t dtu_reset();
 uint8_t dtu_close();
 
 uint8_t dtu_online();
-uint8_t dtu_get_imei(char * imei);
+uint8_t dtu_get_imei(uint8_t * imei);
 
-uint8_t dtu_httppost(char * url, char * header, char * content, char * path, uint16_t timeout);
+uint8_t dtu_httppost(char * url, char * header, MSG_T *msg, char * path, uint16_t timeout);
 uint8_t dtu_check_reg();
 uint8_t dtu_get_ntype(uint8_t *network_type);
 uint8_t	dtu_get_signal(uint8_t *signal_strength);
+uint8_t dtu_add_content(uint8_t *index, uint8_t *content);
+uint8_t dtu_print_n(uint8_t n);
 
 
 

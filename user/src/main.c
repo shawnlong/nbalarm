@@ -86,7 +86,7 @@ static void bsp_init()
     sensor_init();      
 	enableInterrupts();
 	/*start windows watchdog*/
-	WWDG_Init(0x7F, 0x7F);//393ms window@2Mhz main clock
+	//WWDG_Init(0x7F, 0x7F);//393ms window@2Mhz main clock
 	battery_adc_init();
 }
 
@@ -95,17 +95,19 @@ static void bsp_feed_dog()
 	live_flag = 0xFE;
 }
 
+
 main()
 {
 	uint8_t sensor_change = SENSORS_UNCHANGED;
 	uint8_t state = STATE_INSPECTION;
 	uint8_t state_before_retry = STATE_INSPECTION;
-	SENSOR_STATUS_T * sensor_status;
-	uint8_t ret, msg_type;
-	uint8_t retry_times = 0;
+	uint8_t ret;
+	MSG_T msg, *pmsg;
 
+	
     //0.initilize board
     bsp_init();
+	
 	
 	while(1)
 	{
@@ -115,8 +117,7 @@ main()
 		bsp_feed_dog();
 		
 		//1.check sensors
-		sensor_change = sensor_get_status(&sensor_status);
-		//sensor_status = sensor_get_status();
+		sensor_change = sensor_get_status(msg.sensors);
 
 		//2.if new sensor open, alarm speaker
 		if(sensor_change == SENSORS_NEW_OPENED)
@@ -125,15 +126,31 @@ main()
 			speaker_alarm();
 		}
 
-		//3.send message to server
+		//3.push message into stack
 		if(sensor_change == SENSORS_UNCHANGED && state == STATE_INSPECTION)
 		{ 
-			msg_type = MSG_TYPE_STATUS;
+			msg.type = MSG_TYPE_STATUS;
 		}else{
-			msg_type = MSG_TYPE_ALARM;
+			msg.type = MSG_TYPE_ALARM;
 		}
+		msg.status = battery_get_status();
+		msg.tm = timer_get_tick();
+		if(!(state >= STATE_RETRY_1 && sensor_change == SENSORS_UNCHANGED))
+		{
+			msg_push(&msg);
+		}
+
+		//4.try to send all stacked message to server
 		dtu_init();
-		ret = msg_send(msg_type, battery_get_status(), sensor_status, SENSOR_NUMBER);
+		while(1){
+			pmsg = msg_top();
+			if(pmsg != 0 && SUCCESS == (ret = msg_send(pmsg)))
+			{
+				msg_pop();
+				continue;
+			}
+			break;
+		}
 		dtu_close();
 		bsp_feed_dog();
 		//4.wait for speaker play finish
@@ -143,42 +160,51 @@ main()
 		speaker_close();
 
 		//5.update state
-		if(state < STATE_RETRY_1)
+		switch(sensor_change)
 		{
-			if(ret == SUCCESS){
-				if(sensor_change == SENSORS_NEW_CLOSED || sensor_change == SENSORS_NEW_OPENED)
-				{
-					state = STATE_ALARM_1;
-				}
+			case SENSORS_NEW_CLOSED:
+			case SENSORS_NEW_OPENED:
+				state = STATE_ALARM_1;
+				break;
+			case SENSORS_UNCHANGED:
+				state = NEXT_STATE[state];
+				break;
+			case SENSORS_JUST_ALL_CLOSED:
+				state = STATE_INSPECTION;
+				break;
+			default:
+				break;
+		}
 
-				if(sensor_change == SENSORS_UNCHANGED)
-				{
-					state = NEXT_STATE[state];
-				}
-
-				if(sensor_change == SENSORS_JUST_ALL_CLOSED)
-				{
-					state = STATE_INSPECTION;
-				}
-			}else{
+		if(sensor_change == SENSORS_NEW_CLOSED || sensor_change == SENSORS_NEW_OPENED)
+		{
+			state = STATE_ALARM_1;
+		}
+		if(sensor_change == SENSORS_UNCHANGED)
+		{
+			state = NEXT_STATE[state];
+		}
+		if(sensor_change == SENSORS_JUST_ALL_CLOSED)
+		{
+			state = STATE_INSPECTION;
+		}
+		if(ret == SUCCESS)
+		{
+			if(state >= STATE_RETRY_1)
+			{
+				state = state_before_retry;
+			}
+		}else{
+			if(state < STATE_RETRY_1)
+			{
 				state_before_retry = state;
 				state = STATE_RETRY_1;
 			}
 		}
-		else{
-			if(ret == SUCCESS){
-				state = state_before_retry;
-			}else{
-				if(retry_times ++ > MAX_RETRY_TIMES)
-				{
-					while(1);//let wwdg reset the cpu
-				}
-				state = NEXT_STATE[state];
-			}
-		}
 		
 		//6.sleep 
-                awu_sleep(SLEEP_PERIODS[state]);
+		//dtu_print_n(state);
+       	awu_sleep(SLEEP_PERIODS[state]);
 	}
 }
 

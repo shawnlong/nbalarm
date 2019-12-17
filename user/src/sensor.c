@@ -1,7 +1,7 @@
 
 
 /*sensor.c*/
-
+#include "string.h"
 #include "stm8s.h"
 
 #include "sensor.h"
@@ -21,7 +21,7 @@ static GPIO_Pin_TypeDef ID_TO_PIN[SENSOR_NUMBER] =
 
 uint8_t sensor_init()
 {
-#if 0
+#if 1
 	GPIO_Init(GPIOC, GPIO_PIN_5, GPIO_MODE_IN_FL_IT);
 	GPIO_Init(GPIOC, GPIO_PIN_6, GPIO_MODE_IN_FL_IT);
 	GPIO_Init(GPIOC, GPIO_PIN_7, GPIO_MODE_IN_FL_IT);
@@ -49,7 +49,7 @@ params:
 return:
 		  SENSOR_STATUS
 */
-uint8_t sensor_get_status(SENSOR_STATUS_T **status)
+uint8_t sensor_get_status(SENSOR_STATUS_T *status)
 {
 	uint8_t i, value, new_status, opened, new_opened, new_closed;
 	value = GPIO_ReadInputData(GPIOC);
@@ -66,14 +66,17 @@ uint8_t sensor_get_status(SENSOR_STATUS_T **status)
 			}
 			opened ++;
 		}
-		if(new_status == SENSOR_CLOSE && sensor_statuses[i].status == SENSOR_OPEN)
+		if(new_status == SENSOR_CLOSE)
 		{
-			sensor_statuses[i].close_count ++;
-			new_closed ++;
+			if(sensor_statuses[i].status == SENSOR_OPEN)
+			{
+				sensor_statuses[i].close_count ++;
+				new_closed ++;
+			}
 		}
 		sensor_statuses[i].status = new_status;
 	}
-	*status = sensor_statuses;
+	memcpy(status,  sensor_statuses, sizeof(SENSOR_STATUS_T) * SENSOR_NUMBER);
 	if(opened == 0 && new_closed != 0)
 	{
 		return SENSORS_JUST_ALL_CLOSED;

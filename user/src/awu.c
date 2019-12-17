@@ -5,6 +5,7 @@
 #include "sensor.h"
 
 extern __IO uint8_t sensor_interrupt;
+extern __IO uint32_t ticks_quarter_second;
 
 uint8_t last_port_value = 0;
 
@@ -78,9 +79,9 @@ uint8_t awu_init()
 uint8_t awu_sleep(uint32_t seconds)
 {
 	uint32_t i = 0;
+	AWU_Timebase_TypeDef awu_timebase; 
 	static FLASH_LPMode_TypeDef flash_lpmode;
 	/*switch to low power mode here*/
-	//timer_stop();
 	/*1.use LPVR*/
 	CLK_DeInit();
 	CLK_SlowActiveHaltWakeUpCmd(ENABLE);
@@ -129,9 +130,11 @@ uint8_t awu_sleep(uint32_t seconds)
 
 	if(seconds >= 30)
 	{
+		awu_timebase = AWU_TIMEBASE_30S;
 		AWU_Init(AWU_TIMEBASE_30S);
 		seconds /= 30;
 	}else{
+		awu_timebase = AWU_TIMEBASE_1S;
 		AWU_Init(AWU_TIMEBASE_1S);
 	}
 	for(i = 0; i < seconds; i++)
@@ -146,6 +149,13 @@ uint8_t awu_sleep(uint32_t seconds)
 		}
 		WWDG_SetCounter(0x7F);
 		halt();
+		if(awu_timebase == AWU_TIMEBASE_30S)
+		{
+			ticks_quarter_second += 30*4;
+		}else{
+			ticks_quarter_second += 1*4;
+		}
+			
 	}
 	CLK_SlowActiveHaltWakeUpCmd(ENABLE);
 	CLK_ClockSwitchConfig(CLK_SWITCHMODE_AUTO, CLK_SOURCE_HSI, DISABLE, CLK_CURRENTCLOCKSTATE_DISABLE);
