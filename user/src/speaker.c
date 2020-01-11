@@ -15,7 +15,7 @@ uint8_t speaker_init()
 static uint8_t check_exist()
 {
 	GPIO_Init(GPIOA, GPIO_PIN_3, GPIO_MODE_IN_PU_NO_IT);
-	if(GPIO_ReadInputPin(GPIOA, GPIO_PIN_3) != 0)
+	if(1)//GPIO_ReadInputPin(GPIOA, GPIO_PIN_3) != 0)
 	{
 		return 1;
 	}else{
