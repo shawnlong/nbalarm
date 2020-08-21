@@ -2253,6 +2253,9 @@
             <file>
                 <name>$PROJ_DIR$\..\user\inc\uart.h</name>
             </file>
+            <file>
+                <name>$PROJ_DIR$\..\user\inc\version.h</name>
+            </file>
         </group>
         <group>
             <name>src</name>
