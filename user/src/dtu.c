@@ -2,68 +2,53 @@
 
 #include "stm8s.h"
 #include "string.h"
-#include "msg.h"
 
 #include "dtu.h"
 #include "uart.h"
 #include "timer.h"
 #include "awu.h"
 
-static uint8_t *int2string(uint32_t n)
-{
-	static uint8_t string[11];
-	uint32_t temp;
-	uint8_t i;
-	for(i = 0; i < 10; i ++)
-	{
-		temp = n % 10;
-		n = n / 10;
-		string[9 - i] = temp + '0';
-	}
-	for(i = 0; i < 10; i ++)
-	{
-		if(string[i] != '0')
-		{
-			return string+i;
-		}
-	}
-	return &(string[9]);
-}
+
 
 
 static char rx_buffer[RX_BUFFER_SIZE];
 
-static char * at_cmd(char * cmd, char * option)
+
+char * dtu_at_cmd(char * cmd, char * option)
 {
 	uint8_t i = 0;
 	char ch;
-	uint32_t tick; 
-	
+	uint32_t tick;
+
 	uart_send(cmd, strlen(cmd), UART_SEND_MODE_CHAR);
-	if(strcmp(cmd, AT_CMD_HTTPCONTENT) == 0)
+
+	if (strcmp(cmd, AT_CMD_HTTPCONTENT) == 0)
 	{
 		uart_send(option, strlen(option), UART_SEND_MODE_HEX);
-		uart_send(",1",2,UART_SEND_MODE_CHAR);	
-	}else{
-		uart_send(option, strlen(option),UART_SEND_MODE_CHAR);
+		uart_send(",1", 2, UART_SEND_MODE_CHAR);
 	}
-	uart_send("\r\n", 2, UART_SEND_MODE_CHAR);
-	
-	for(tick = timer_get_tick();timer_get_tick() - tick < 3;)
+	else 
 	{
-		if((uart_getchar(&ch) != 0) || (ch == '\r') || (ch == '\n'))
+		uart_send(option, strlen(option), UART_SEND_MODE_CHAR);
+	}
+
+	uart_send("\r\n", 2, UART_SEND_MODE_CHAR);
+
+	for (tick = timer_get_tick(); timer_get_tick() -tick < 3; )
+	{
+		if ((uart_getchar(&ch) != 0) || (ch == '\r') || (ch == '\n'))
 		{
 			continue;
 		}
 
 		rx_buffer[i++] = ch;
 
-		if((i >= 2) && (rx_buffer[i - 2] == 'O') && (rx_buffer[i - 1] == 'K'))
+		if ((i >= 2) && (rx_buffer[i - 2] == 'O') && (rx_buffer[i - 1] == 'K'))
 		{
 			return rx_buffer;
 		}
 
-		if(i >= RX_BUFFER_SIZE - 1) // || ()
+		if (i >= RX_BUFFER_SIZE - 1) // || ()
 		{
 			return rx_buffer;
 		}
@@ -77,28 +62,32 @@ static char * at_cmd(char * cmd, char * option)
 
 
 
-static uint8_t waitfor_response(uint8_t timeout_seconds, char *ok_pattern)
+uint8_t dtu_waitfor_response(uint8_t timeout_seconds, char * ok_pattern)
 {
 	char ch;
 	int8_t ok_pos = -1;
 	uint32_t tick = timer_get_tick();
 	uint8_t ok_len = strlen(ok_pattern);
-		
-	while(timer_get_tick() - tick < timeout_seconds)
+
+	while (timer_get_tick() -tick < timeout_seconds)
 	{
-		if(uart_getchar(&ch) != 0)
-			continue;
-		if(ch == ok_pattern[ok_pos + 1])
+		if (uart_getchar(&ch) != 0) continue;
+
+		if (ch == ok_pattern[ok_pos + 1])
 		{
 			ok_pos++;
-			if(ok_pos == ok_len - 1)
+
+			if (ok_pos == ok_len - 1)
 			{
 				return ACK_OK;
 			}
-		}else{
+		}
+		else 
+		{
 			ok_pos = -1;
 		}
 	}
+
 	return ACK_FAIL;
 }
 
@@ -115,55 +104,68 @@ static uint8_t waitfor_response(uint8_t timeout_seconds, char *ok_pattern)
 uint8_t dtu_init()
 {
 	static uint8_t configured = 0;
-	
+#if DEBUG_WO_DTU
+	return 0;
+#endif
 	GPIO_Init(GPIOC, GPIO_PIN_3, GPIO_MODE_OUT_PP_LOW_SLOW);
 	GPIO_Init(GPIOD, GPIO_PIN_4, GPIO_MODE_OUT_PP_LOW_SLOW);
 	GPIO_WriteHigh(GPIOC, GPIO_PIN_3);
-	timer_delay(9);
+	dtu_waitfor_response(9, "^CINIT: 32");
+
 #if 1
-	if(configured == 0)
+
+	if (configured == 0)
 	{
 		uart_init(1, 57600);
 		UART1_Cmd(ENABLE);
-		at_cmd("at+IPR=","9600");
+		dtu_at_cmd("at+IPR=", "9600");
 		UART1_Cmd(DISABLE);
 		uart_init(1, 9600);
 		UART1_Cmd(ENABLE);
 		timer_delay(2);
-		at_cmd(AT_CMD_W,"");
+		dtu_at_cmd(AT_CMD_W, "");
 		configured = 1;
-	}else{
+	}
+	else 
+	{
 		uart_init(1, 9600);
 		UART1_Cmd(ENABLE);
 	}
+
 #else
-	
-	at_cmd("at+IPR=","57600");
-	at_cmd(AT_CMD_W,"");
-	
+
+	dtu_at_cmd("at+IPR=", "57600");
+	dtu_at_cmd(AT_CMD_W, "");
+
 #endif
-	at_cmd(AT_CMD_ATE, "1");
-	at_cmd(AT_CMD_CFGDUALMODE,"1");
-	at_cmd(AT_CMD_CFGRATRRIO,"4");
+
+	dtu_at_cmd(AT_CMD_ATE, "1");
+	dtu_at_cmd(AT_CMD_CFGDUALMODE, "1");
+	dtu_at_cmd(AT_CMD_CFGRATRRIO, "4");
 
 	return 0;
 }
 
+
 /*
 close power or sleep*/
-uint8_t dtu_close()
+uint8_t dtu_close(uint8_t state)
 {
 	UART1_DeInit();
 	UART1_Cmd(DISABLE);
 
 	GPIO_WriteLow(GPIOC, GPIO_PIN_3);
+
 	//wait for a while to power down dtu
 	timer_delay(1);
 
 	return 0;
 }
 
+
 #if 0
+
+
 uint8_t dtu_reset()
 {
 	GPIO_WriteHigh(GPIOD, GPIO_PIN_2);
@@ -173,15 +175,10 @@ uint8_t dtu_reset()
 	GPIO_WriteHigh(GPIOD, GPIO_PIN_2);
 	return 0;
 }
+
+
 #endif
 
-uint8_t dtu_online(){
-	if(waitfor_response(30, DTU_ONLINE) != ACK_OK) 
-	{
-		return 1;
-	}
-	return 0;
-}
 
 /*
 	func:
@@ -194,80 +191,25 @@ uint8_t dtu_online(){
 */
 uint8_t dtu_check_reg()
 {
-    char *response;
+	char * response;
 	uint8_t i;
 
-	for(i = 0; i < DTU_CHECKREG_RETRY; i ++)
+	for (i = 0; i < DTU_CHECKREG_RETRY; i++)
 	{
-		response = at_cmd(AT_CMD_CEREG, "?");
-		
-		if((response = strstr(response, "+CEREG:")) == 0)
-		{
-			continue;
-		}
+		response = dtu_at_cmd(AT_CMD_CEREG, "?");
 
-		if(response[11] == '1' | response[11] == '5')
+ 		if ((response = strstr(response, "+CEREG:")) != 0 && (response[11] == '1' | response[11] == '5'))
 		{
 			return 0;
 		}
+		timer_delay(1 * i);
 	}
+
 	return 1;
 }
 
 
-/*
-  function:dtu_httppost
-		post to http server
-  param:
-		header: 	a string contains http header 
-		content:	a string contains http body
-  return:
-		0 - success
-		n - error code
-*/
-uint8_t dtu_httppost(char * url, char * header, MSG_T *msg, char * path, uint16_t timeout)
-{
-	uint8_t response;
-	at_cmd(AT_CMD_HTTPCREATE, url);
-	at_cmd(AT_CMD_HTTPHEADER, header);
 
-	if(msg->type == MSG_TYPE_ALARM)			      
-	{
-		dtu_add_content("{\"msg\":{\"tm\":", int2string(timer_get_tick() - msg->tm));
-		dtu_add_content(",\"type\":1,\"dev_id\":\"", msg->dev_id);
-		dtu_add_content("\",\"net_type\":",int2string(msg->net_type));
-		dtu_add_content(",\"signal\":",int2string(msg->signal));
-		dtu_add_content(",\"sensor_msg\":[{\"sensor_id\":\"1\",\"sensor_status\":",int2string(msg->sensors[0].status));
-		dtu_add_content(",\"open\":", int2string(msg->sensors[0].open_count));
-		dtu_add_content(",\"close\":", int2string(msg->sensors[0].close_count));
-		dtu_add_content("},{\"sensor_id\":\"2\",\"sensor_status\":",int2string(msg->sensors[1].status));
-		dtu_add_content(",\"open\":", int2string(msg->sensors[1].open_count));
-		dtu_add_content(",\"close\":", int2string(msg->sensors[1].close_count));
-		dtu_add_content("},{\"sensor_id\":\"3\",\"sensor_status\":",int2string(msg->sensors[2].status));
-		dtu_add_content(",\"open\":", int2string(msg->sensors[2].open_count));
-		dtu_add_content(",\"close\":", int2string(msg->sensors[2].close_count));
-		dtu_add_content("}]},\"msg_serial\":", int2string(msg->serial));
-		dtu_add_content("}", "");
-	}
-	else
-	{
-		dtu_add_content("{\"msg\":{\"tm\":", int2string(timer_get_tick() - msg->tm));
-		dtu_add_content(",\"type\":2,\"dev_id\":\"", msg->dev_id);
-		dtu_add_content("\",\"net_type\":",int2string(msg->net_type));
-		dtu_add_content(",\"signal\":", int2string(msg->signal));
-		dtu_add_content(",\"dev_status\":",int2string(msg->status));
-		dtu_add_content("},\"msg_serial\":", int2string(msg->serial));
-		dtu_add_content("}", "");
-	}
-	
-	at_cmd("AT+HTTPCONTENT=0","");
-	at_cmd(AT_CMD_HTTPSEND, path);
-	response = waitfor_response(timeout, HTTP_ACK_OK);
-	at_cmd(AT_CMD_ATE, "1");
-	at_cmd(AT_CMD_HTTPCLOSE, "=0");
-
-	return response;
-}
 
 
 uint8_t dtu_get_imei(uint8_t * imei)
@@ -275,20 +217,21 @@ uint8_t dtu_get_imei(uint8_t * imei)
 	char * response;
 	uint8_t i;
 
-	response = at_cmd(AT_CMD_GSN, "");
+	response = dtu_at_cmd(AT_CMD_GSN, "");
 
 	response = strstr(response, "86");
 
-	if(response == 0)
+	if (response == 0)
 	{
 		return 1;
 	}
-	else
+	else 
 	{
-		for(i = 0; i < DTU_IMEI_LEN; i++)
+		for (i = 0; i < DTU_IMEI_LEN; i++)
 		{
 			imei[i] = response[i];
-			if(imei[i] < '0' || imei[i] > '9')
+
+			if (imei[i] < '0' || imei[i] > '9')
 			{
 				return 1;
 			}
@@ -305,21 +248,21 @@ uint8_t dtu_get_ntype(uint8_t * network_type)
 {
 	static char * response;
 
-	response = at_cmd(AT_CMD_COPS, "?");
+	response = dtu_at_cmd(AT_CMD_COPS, "?");
 
-	if((response = strstr(response, "+COPS:")) == 0)
+	if ((response = strstr(response, "+COPS:")) == 0)
 	{
 		return 1;
 	}
-	else
+	else 
 	{
 		response = strstr(response, ", ");
 
-		if(response[2] == '9')
+		if (response[2] == '9')
 		{
 			*network_type = DTU_NET_TYPE_NB;
 		}
-		else
+		else 
 		{
 			*network_type = DTU_NET_TYPE_GPRS;
 		}
@@ -333,38 +276,38 @@ uint8_t dtu_get_signal(uint8_t * signal_strength)
 {
 	char * response;
 
-	response = at_cmd(AT_CMD_CSQ, "");
+	response = dtu_at_cmd(AT_CMD_CSQ, "");
 
-	if((response = strstr(response, "+CSQ:")) == 0)
+	if ((response = strstr(response, "+CSQ:")) == 0)
 	{
 		return 1;
 	}
-	else
+	else 
 	{
 		response = strstr(response, ",");
-		if(response[-2] > '0' && response[-2] <= '9'){
+
+		if (response[-2] > '0' && response[-2] <= '9')
+		{
 			*signal_strength = (response[-2] - '0') * 10;
 		}
+
 		*signal_strength += (response[-1] - '0');
 	}
 
 	return 0;
 }
 
-uint8_t dtu_add_content(uint8_t *index, uint8_t *content)
-{
-	at_cmd(AT_CMD_HTTPCONTENT, (char*)index);
-	if(content[0] != 0)
-	{
-		at_cmd(AT_CMD_HTTPCONTENT, (char*)content);
-	}
-  return 0;
-}
 
-uint8_t dtu_print_n(uint8_t n)
+uint8_t dtu_add_content(uint8_t * index, uint8_t * content)
 {
-	at_cmd(AT_CMD_AT, (char*)int2string(n));
-        return 0;
+	dtu_at_cmd(AT_CMD_HTTPCONTENT, (char *) index);
+
+	if (content[0] != 0)
+	{
+		dtu_at_cmd(AT_CMD_HTTPCONTENT, (char *) content);
+	}
+
+	return 0;
 }
 
 

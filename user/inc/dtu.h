@@ -50,23 +50,22 @@
 #define DTU_NET_TYPE_NB		1
 #define DTU_NET_TYPE_GPRS	2
 #define DTU_CONTENT_MAX_SIZE	127
-#define DTU_CHECKREG_RETRY	3
+#define DTU_CHECKREG_RETRY	15
 
 
 uint8_t dtu_init();
 uint8_t dtu_reset();
-uint8_t dtu_close();
+uint8_t dtu_close(uint8_t state);
 
-uint8_t dtu_online();
 uint8_t dtu_get_imei(uint8_t * imei);
-
-uint8_t dtu_httppost(char * url, char * header, MSG_T *msg, char * path, uint16_t timeout);
 uint8_t dtu_check_reg();
 uint8_t dtu_get_ntype(uint8_t *network_type);
 uint8_t	dtu_get_signal(uint8_t *signal_strength);
 uint8_t dtu_add_content(uint8_t *index, uint8_t *content);
-uint8_t dtu_print_n(uint8_t n);
+char* dtu_at_cmd(char * cmd, char *param);
+uint8_t dtu_waitfor_response(uint8_t timeout_seconds, char * ok_pattern);
 
+#define DEBUG_WO_DTU 0
 
 
 #endif

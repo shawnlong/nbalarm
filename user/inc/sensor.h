@@ -8,25 +8,25 @@
 #define SENSOR_OPEN 			1
 #define SENSOR_UNKNOWN			2
 
+#define SENSOR_STACK_DEPTH		10
+typedef struct SENSOR_EVENT_t{
+	uint32_t tm;
+	uint8_t val;
+	uint8_t pre_val;
+	uint8_t state;
+}SENSOR_EVENT_T;
 
-//all sensors status overview
-#define SENSORS_NEW_CLOSED		0
-#define SENSORS_NEW_OPENED		1
-#define SENSORS_UNCHANGED		2
-#define SENSORS_JUST_ALL_CLOSED 3
-
-typedef struct sensor_status_t{
-	uint8_t status;
-	uint16_t open_count;
-	uint16_t close_count;
-} SENSOR_STATUS_T;
+#define SENSOR_GPIO_PORT GPIOC
 
 uint8_t sensor_init();
 uint8_t sensor_close();
-uint8_t sensor_get_status(SENSOR_STATUS_T *status);
-//uint8_t sensor_get_change();
-uint8_t sensor_set_value(uint8_t value);
-
+uint8_t sensor_stack_empty();
+void sensor_push_raw();
+void sensor_push_back(SENSOR_EVENT_T *pevent);
+uint8_t sensor_pop(SENSOR_EVENT_T *pevent);
+uint8_t sensor_check_open(uint8_t value, uint8_t id);
+uint8_t sensor_get_open_times(uint8_t id);
+uint8_t sensor_get_close_times(uint8_t id);
 
 #endif
 

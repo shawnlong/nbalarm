@@ -29,6 +29,7 @@
 #include "stm8s_it.h"
 #include "sensor.h"
 #include "uart.h"
+#include "speaker.h"
 //#include "stm8s_eval.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -45,6 +46,7 @@ extern __IO uint8_t uart1_rx_tail;
 extern __IO uint8_t uart1_rx_count;
 #endif 
 __IO uint8_t sensor_interrupt = 0;
+__IO uint8_t ac_interrupt = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -139,11 +141,36 @@ INTERRUPT_HANDLER(EXTI_PORTA_IRQHandler, 3)
   * @param	None
   * @retval None
   */
+extern uint8_t g_ac_alarm;
 INTERRUPT_HANDLER(EXTI_PORTB_IRQHandler, 4)
 {
 	/* In order to detect unexpected events during development,
 	   it is recommended to set a breakpoint on the following instruction.
 	*/
+	static uint8_t last_val = 0xFF;
+	uint8_t val;
+        uint16_t i;
+	if(g_ac_alarm == FALSE)
+	{
+		return;
+	}
+	/*debouns- disable interrupt*/
+	GPIOB->CR2 &= 0x10;/*PB4 used*/
+	/*debous- wait 50ms*/
+	for(i = 0; i < 0xFFF; i ++)
+		;
+	val = GPIO_ReadInputData(GPIOB) & 0x10;
+	/*check if AC POWER is down*/
+	if(val != last_val)
+	{
+		ac_interrupt ++;
+		if(val < last_val)
+		{
+			speaker_start();
+		}
+	}
+	last_val = val;
+	GPIOB->CR2 |= 0x10;/*PB4 used*/
 }
 
 
@@ -157,7 +184,27 @@ INTERRUPT_HANDLER(EXTI_PORTC_IRQHandler, 5)
 	/* In order to detect unexpected events during development,
 	   it is recommended to set a breakpoint on the following instruction.
 	*/
+	uint32_t i;
+	uint8_t val;
+	static uint8_t last_val = 0x0;
 	sensor_interrupt ++;
+	/*debouns- disable interrupt*/
+	GPIOC->CR2 &= 0x0E;/*PC5~7 used*/
+	/*debous- wait 50ms*/
+	for(i = 0; i < 0xFFF; i ++)
+		;
+	/*push sensor status*/
+	val = GPIO_ReadInputData(GPIOC) & 0xE0;
+	if(val != last_val)
+	{
+		if(val > last_val)
+		{
+			speaker_start();
+		}
+		sensor_push_raw();
+		last_val = val;
+	}
+	GPIOC->CR2 |= 0xE0;/*PC5~7 used*/
 }
 
 
@@ -171,6 +218,7 @@ INTERRUPT_HANDLER(EXTI_PORTD_IRQHandler, 6)
 	/* In order to detect unexpected events during development,
 	   it is recommended to set a breakpoint on the following instruction.
 	*/
+	//GPIO_ReadInputData(GPIOD);
 }
 
 

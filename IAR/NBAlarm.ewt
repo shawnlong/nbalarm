@@ -2214,15 +2214,15 @@
             <file>
                 <name>$PROJ_DIR$\..\lib\src\stm8s_uart1.c</name>
             </file>
-            <file>
-                <name>$PROJ_DIR$\..\lib\src\stm8s_wwdg.c</name>
-            </file>
         </group>
     </group>
     <group>
         <name>user</name>
         <group>
             <name>inc</name>
+            <file>
+                <name>$PROJ_DIR$\..\user\inc\ac.h</name>
+            </file>
             <file>
                 <name>$PROJ_DIR$\..\user\inc\awu.h</name>
             </file>
@@ -2256,6 +2256,9 @@
         </group>
         <group>
             <name>src</name>
+            <file>
+                <name>$PROJ_DIR$\..\user\src\ac.c</name>
+            </file>
             <file>
                 <name>$PROJ_DIR$\..\user\src\awu.c</name>
             </file>
