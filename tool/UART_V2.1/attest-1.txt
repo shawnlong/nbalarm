@@ -1,0 +1,5 @@
+at+httpcreate="http://easyfacetech.com:9000/"
+at+httpheader=0,"Content-Type:application/json\r\n"
+at+httpcontent=0,"{\"id\":22}"
+at+httpsend=0,1,"/test/jsontTest"
+

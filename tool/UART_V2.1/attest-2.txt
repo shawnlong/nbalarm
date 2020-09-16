@@ -1,0 +1,20 @@
+at+httpcreate="http://easyfacetech.com:9000/"
+at+httpheader=0,"Content-Type:application/json\r\n"
+at+httpcontent=0,"{\"msg\": {\"type\": 2,\"dev_id\": 00010002,\"dev_status\": 2},\"msg_serial\": \"102985\"}"
+at+httpsend=0,1,"/test/jsontTest "
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

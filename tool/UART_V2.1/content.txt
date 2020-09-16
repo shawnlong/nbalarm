@@ -1,0 +1,1 @@
+{"msg":{"type":1,"dev_id":"866956040109387","sensor_msg":[{"sensor_id": "1","sensor_status": 1},{"sensor_id": "2","sensor_status": 1},{"sensor_id": "3","sensor_status": 1}]},"msg_serial":1}

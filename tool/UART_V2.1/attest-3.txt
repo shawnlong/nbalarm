@@ -1,0 +1,20 @@
+at+httpcreate="http://118.123.213.111:8044/"
+at+httpheader=0,"Content-Type:application/json\r\n"
+at+httpcontent=0,"{\"msg\":{\"type\":1,\"dev_id\":\"866956040109387\",\"sensor_msg\":[{\"sensor_id\": \"1\",\"sensor_status\": 1},{\"sensor_id\": \"2\",\"sensor_status\": 1},{\"sensor_id\": \"3\",\"sensor_status\": 1}]},\"msg_serial\":1}"
+at+httpsend=0,1,"/API/Device/index"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
