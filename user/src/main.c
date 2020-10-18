@@ -178,7 +178,7 @@ main()
 	{
 		/*2.sleep for specified period, determine by state*/
 		awu_sleep(SLEEP_PERIODS[state]);
-
+                
 		if (sensor_stack_empty() == TRUE)
 		{
 			sensor_push_raw();

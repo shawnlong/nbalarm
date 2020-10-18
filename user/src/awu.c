@@ -3,6 +3,7 @@
 
 #include "awu.h"
 #include "sensor.h"
+#include "timer.h"
 
 extern __IO uint8_t sensor_interrupt;
 extern __IO uint8_t ac_interrupt;
@@ -104,22 +105,7 @@ static void enter_lowpower()
 	CLK_ClockSwitchConfig(CLK_SWITCHMODE_AUTO, CLK_SOURCE_LSI, DISABLE, CLK_CURRENTCLOCKSTATE_DISABLE);
 	
 	/*4.close all pripherals but awu*/
-#if 0
-	CLK_PeripheralClockConfig(CLK_PERIPHERAL_I2C, DISABLE);
-	CLK_PeripheralClockConfig(CLK_PERIPHERAL_SPI, DISABLE);
-	CLK_PeripheralClockConfig(CLK_PERIPHERAL_UART1, DISABLE);
-	CLK_PeripheralClockConfig(CLK_PERIPHERAL_UART2, DISABLE);
-	CLK_PeripheralClockConfig(CLK_PERIPHERAL_UART3, DISABLE);
-	CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER6, DISABLE);
-	CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER5, DISABLE);
-	CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER4, DISABLE);
-	CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER3, DISABLE);
-	CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER2, DISABLE);
-	CLK_PeripheralClockConfig(CLK_PERIPHERAL_TIMER1, DISABLE);
-	CLK_PeripheralClockConfig(CLK_PERIPHERAL_ADC, DISABLE);
-	CLK_PeripheralClockConfig(CLK_PERIPHERAL_CAN, DISABLE);
-	
-#endif
+
 	for(i = 0; i < 13; i ++)
 	{
 		CLK_PeripheralClockConfig(clock_to_close[i], DISABLE);
@@ -129,20 +115,7 @@ static void enter_lowpower()
 	FLASH_SetLowPowerMode(FLASH_LPMODE_POWERDOWN);
 
 	/*6.set gpio pin to float input*/
-#if 0
-	GPIO_Init(GPIOA, GPIO_PIN_1, GPIO_MODE_IN_FL_NO_IT);
-	GPIO_Init(GPIOA, GPIO_PIN_2, GPIO_MODE_IN_FL_NO_IT);
-	GPIO_Init(GPIOA, GPIO_PIN_3, GPIO_MODE_IN_FL_NO_IT);
-	GPIO_Init(GPIOB, GPIO_PIN_5, GPIO_MODE_IN_FL_NO_IT);
-	GPIO_Init(GPIOC, GPIO_PIN_3, GPIO_MODE_IN_FL_NO_IT);
-	GPIO_Init(GPIOC, GPIO_PIN_4, GPIO_MODE_IN_FL_NO_IT);
-	GPIO_Init(GPIOD, GPIO_PIN_1, GPIO_MODE_IN_FL_NO_IT);
-	GPIO_Init(GPIOD, GPIO_PIN_2, GPIO_MODE_IN_FL_NO_IT);
-	GPIO_Init(GPIOD, GPIO_PIN_3, GPIO_MODE_IN_FL_NO_IT);
-	GPIO_Init(GPIOD, GPIO_PIN_4, GPIO_MODE_IN_FL_NO_IT);
-	GPIO_Init(GPIOD, GPIO_PIN_5, GPIO_MODE_IN_FL_NO_IT);
-	GPIO_Init(GPIOD, GPIO_PIN_6, GPIO_MODE_IN_FL_NO_IT);
-#endif
+
 	for(i = 0; i < 12; i ++)
 	{
 		GPIO_Init(port_to_flin[i], pin_to_flin[i], GPIO_MODE_IN_FL_NO_IT);
@@ -173,10 +146,9 @@ uint8_t awu_init()
 
 uint8_t awu_sleep(uint32_t seconds)
 {
-	uint32_t i = 0;
-	uint32_t j;
+	uint32_t i;
 	AWU_Timebase_TypeDef awu_timebase; 
-	static uint8_t ac_value, pre_ac_value = 0xFF;
+	//static uint8_t ac_value, pre_ac_value = 0xFF;
 	/*save power mode*/
 	enter_lowpower();
 	
@@ -193,32 +165,19 @@ uint8_t awu_sleep(uint32_t seconds)
 	ac_interrupt = 0;
 	for(i = 0; i < seconds; i++)
 	{
-        if(sensor_interrupt != 0)		
-        {
-			break;
-		}
-		if(ac_interrupt != 0)
-		{
-			for(j = 0; j < 0xFFFFFFFF; j ++)
-			{
-				/*delay for a while*/
-			}
-			ac_value = GPIO_ReadInputData(GPIOB) & 0x10;
-			if(ac_value != pre_ac_value)
-			{
-				pre_ac_value = ac_value;
-				break;
-			}
-		}
-		//WWDG_SetCounter(0x7F);
-		halt();
-		
-		if(awu_timebase == AWU_TIMEBASE_30S)
-		{
-			ticks_quarter_second += 30*4;
-		}else{
-			ticks_quarter_second += 1*4;
-		}		
+          if(sensor_interrupt != 0 || ac_interrupt != 0)		
+          {
+            break;
+          }
+          //WWDG_SetCounter(0x7F);
+          halt();
+                  
+          if(awu_timebase == AWU_TIMEBASE_30S)
+          {
+              ticks_quarter_second += 30*4;
+          }else{
+              ticks_quarter_second += 1*4;
+          }	                                                                                                        	
 	}
 
 	sensor_interrupt = 0;

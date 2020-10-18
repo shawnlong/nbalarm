@@ -160,16 +160,18 @@ INTERRUPT_HANDLER(EXTI_PORTB_IRQHandler, 4)
 	for(i = 0; i < 0xFFF; i ++)
 		;
 	val = GPIO_ReadInputData(GPIOB) & 0x10;
-	/*check if AC POWER is down*/
+	
 	if(val != last_val)
 	{
 		ac_interrupt ++;
+		/*check if AC POWER is down*/
 		if(val < last_val)
 		{
 			speaker_start();
 		}
+		last_val = val;
 	}
-	last_val = val;
+	
 	GPIOB->CR2 |= 0x10;/*PB4 used*/
 }
 
