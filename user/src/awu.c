@@ -174,6 +174,7 @@ uint8_t awu_init()
 uint8_t awu_sleep(uint32_t seconds)
 {
 	uint32_t i = 0;
+	uint32_t j;
 	AWU_Timebase_TypeDef awu_timebase; 
 	static uint8_t ac_value, pre_ac_value = 0xFF;
 	/*save power mode*/
@@ -198,6 +199,10 @@ uint8_t awu_sleep(uint32_t seconds)
 		}
 		if(ac_interrupt != 0)
 		{
+			for(j = 0; j < 0xFFFFFFFF; j ++)
+			{
+				/*delay for a while*/
+			}
 			ac_value = GPIO_ReadInputData(GPIOB) & 0x10;
 			if(ac_value != pre_ac_value)
 			{
@@ -207,6 +212,7 @@ uint8_t awu_sleep(uint32_t seconds)
 		}
 		//WWDG_SetCounter(0x7F);
 		halt();
+		
 		if(awu_timebase == AWU_TIMEBASE_30S)
 		{
 			ticks_quarter_second += 30*4;
