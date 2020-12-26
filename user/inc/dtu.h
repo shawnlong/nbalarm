@@ -12,6 +12,7 @@
 #define AT_CMD_GMM				"AT+GMM"
 #define AT_CMD_GMR				"AT+GMR"
 #define AT_CMD_GSN				"AT+GSN=1"
+#define AT_CMD_CCID                             "AT+CCID"
 #define AT_CMD_CGACT			"AT+CGACT"
 #define AT_CMD_CGATT			"AT+CGATT"
 #define AT_CMD_HTTPCREATE		"AT+HTTPCREATE="

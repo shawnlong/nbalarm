@@ -193,7 +193,7 @@ uint8_t dtu_check_reg()
 {
 	char * response;
 	uint8_t i;
-
+        dtu_at_cmd(AT_CMD_CCID,"");
 	for (i = 0; i < DTU_CHECKREG_RETRY; i++)
 	{
 		response = dtu_at_cmd(AT_CMD_CEREG, "?");
@@ -239,7 +239,7 @@ uint8_t dtu_get_imei(uint8_t * imei)
 	}
 
 	imei[DTU_IMEI_LEN] = '\0';
-
+        
 	return 0;
 }
 
